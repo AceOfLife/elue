@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.station-tag {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.station-tag i {
+    margin-right: 0.25rem;
+    font-size: 0.75rem;
+}
+
+/* Select2 Custom Styling */
+.select2-container--default .select2-selection--multiple {
+    min-height: 42px;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    padding: 0.25rem !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #e0e7ff !important;
+    border-color: #c7d2fe !important;
+    color: #4f46e5 !important;
+    border-radius: 9999px !important;
+    padding: 0 0.5rem !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #818cf8 !important;
+    margin-right: 0.25rem !important;
+}
+
+.select2-container .select2-search--inline .select2-search__field {
+    margin-top: 0.5rem !important;
+    padding-left: 0.5rem !important;
+}
+
+.select2-results__option {
+    padding: 8px 12px !important;
+}
+
+.select2-dropdown {
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.metrics-table th {
+    color: #000;
+    font-weight: 600;
+}
+
+.metrics-table td {
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.company-logo {
+    height: 40px;
+    width: auto;
+    max-width: 120px;
+}
+
+/* Custom styles for the new table layout */
+.compact-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.compact-table th, .compact-table td {
+    padding: 0.5rem;
+    text-align: center;
+    white-space: normal;
+    word-wrap: break-word;
+    font-size: 0.75rem;
+}
+
+.compact-table th {
+    font-weight: 500;
+    color: #000;
+    background-color: transparent;
+}
+
+.compact-table td {
+    font-weight: 500;
+    color: #3b82f6;
+}
+
+.allocation-summary {
+    background-color: #f0f9ff;
+    border-left: 4px solid #0ea5e9;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.allocation-summary p {
+    margin: 0.25rem 0;
+}
+
+@media (min-width: 768px) {
+    .compact-table th, .compact-table td {
+        font-size: 0.875rem;
+        padding: 0.75rem;
+    }
+}
+
+/* Media allocation specific styles */
+.allocation-input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.allocation-input-group label {
+    flex: 0 0 120px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.allocation-input-group input {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.allocation-input-group span {
+    flex: 0 0 60px;
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+.allocation-visual {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    overflow: hidden;
+}
+
+.allocation-visual-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.allocation-visual-bar.tv {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.allocation-visual-bar.radio {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.allocation-visual-bar.other {
+    background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .allocation-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .allocation-input-group label {
+        margin-bottom: 0.25rem;
+    }
+    
+    .allocation-input-group input {
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* Animation for allocation changes */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.allocation-changing {
+    animation: pulse 0.3s ease;
+}
+
+/* Error states for allocation */
+.allocation-error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.allocation-error-message {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+/* Success state for allocation */
+.allocation-success {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Loading state for form submission */
+.form-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Custom scrollbar for tables */
+.table-container {
+    overflow-x: auto;
+}
+
+.table-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Chart container improvements */
+.chart-container {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .chart-container {
+        page-break-inside: avoid;
+    }
+    
+    .compact-table {
+        font-size: 0.7rem;
+    }
+}
+

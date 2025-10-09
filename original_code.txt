@@ -1,0 +1,1458 @@
+index.html
+---------------------------------------------------------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elue 2.0 - TRP/GRP Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+        .station-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .station-tag i {
+            margin-right: 0.25rem;
+            font-size: 0.75rem;
+        }
+        /* Select2 Custom Styling */
+        .select2-container--default .select2-selection--multiple {
+            min-height: 42px;
+            border: 1px solid #d1d5db !important;
+            border-radius: 0.5rem !important;
+            padding: 0.25rem !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #e0e7ff !important;
+            border-color: #c7d2fe !important;
+            color: #4f46e5 !important;
+            border-radius: 9999px !important;
+            padding: 0 0.5rem !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #818cf8 !important;
+            margin-right: 0.25rem !important;
+        }
+        .select2-container .select2-search--inline .select2-search__field {
+            margin-top: 0.5rem !important;
+            padding-left: 0.5rem !important;
+        }
+        .select2-results__option {
+            padding: 8px 12px !important;
+        }
+        .select2-dropdown {
+            border-radius: 0.5rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .metrics-table th {
+            color: #000;
+            font-weight: 600;
+        }
+        .metrics-table td {
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        .company-logo {
+            height: 40px;
+            width: auto;
+            max-width: 120px;
+        }
+        /* Custom styles for the new table layout */
+        .compact-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        .compact-table th, .compact-table td {
+            padding: 0.5rem;
+            text-align: center;
+            white-space: normal;
+            word-wrap: break-word;
+            font-size: 0.75rem;
+        }
+        .compact-table th {
+            font-weight: 500;
+            color: #000;
+            background-color: transparent;
+        }
+        .compact-table td {
+            font-weight: 500;
+            color: #3b82f6;
+        }
+        @media (min-width: 768px) {
+            .compact-table th, .compact-table td {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p class="font-medium">Calculating your campaign metrics...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold">Elue 2.0</h1>
+                    <p class="text-blue-100">TRP & GRP Campaign Simulator</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">Beta</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section (Only shown before form submission) -->
+            <section id="initialHero" class="mb-12 text-center" {% if results %}style="display: none;"{% endif %}>
+                <p class="text-gray-600 max-w-2xl mx-auto">Enter your campaign details below to predict your Target Rating Points (TRP) and Gross Rating Points (GRP) across Nigerian TV stations</p>
+            </section>
+
+            <!-- Form Section (Centered and hidden when results exist) -->
+            <div id="formSection" class="mx-auto w-full max-w-2xl" {% if results %}style="display: none;"{% endif %}>
+                <!-- Manual Input Form -->
+                <form action="/predict/" method="post" class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Manual Campaign Input</h2>
+                        <p class="text-gray-500 text-sm">Fill in your campaign details manually</p>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Category -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select id="Category" name="Category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="" disabled selected>Select a category</option>
+                                    <option value="oralcare">Oral Care</option>
+                                    <option value="seasoning">Seasoning</option>
+                                    <option value="savoury">Savoury</option>
+                                    <option value="skincleansing">Skin Cleansing</option>
+                                    <option value="nutritiondrinks">Nutrition Drinks</option>
+                                    <option value="tea">Tea</option>
+                                    <option value="fabclean">Fabric Cleaner</option>
+                                    <option value="fabriccarepowder">Fabric Care Powder</option>
+                                    <option value="skincare">Skin Care</option>
+                                    <option value="dishrestroomwash">Dish/Restroom Wash</option>
+                                    <option value="spreads">Spreads</option>
+                                    <option value="coffee">Coffee</option>
+                                    <option value="antisepticdisinfectant">Antiseptic Disinfectant</option>
+                                    <option value="hairstylingaidextension">Hair Styling</option>
+                                    <option value="dishwash">Dish Wash</option>
+                                    <option value="insecticidesrepellents">Insecticides</option>
+                                    <option value="haircaretreatment">Hair Care</option>
+                                    <option value="deodorants">Deodorants</option>
+                                    <option value="deodorizers">Deodorizers</option>
+                                    <option value="fabriccareliquid">Fabric Care Liquid</option>
+                                    <option value="teaherbal">Herbal Tea</option>
+                                    <option value="handwashdisinfectant">Hand Wash</option>
+                                    <option value="lavatorycare">Lavatory Care</option>
+                                    <option value="teaicetea">Ice Tea</option>
+                                    <option value="antisepticsanitizer">Sanitizer</option>
+                                </select>
+                            </div>
+
+                            <!-- Month -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                                <select id="Month_name" name="Month_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Select Month</option>
+                                    <option value="January">January</option>
+                                    <option value="February">February</option>
+                                    <option value="March">March</option>
+                                    <option value="April">April</option>
+                                    <option value="May">May</option>
+                                    <option value="June">June</option>
+                                    <option value="July">July</option>
+                                    <option value="August">August</option>
+                                    <option value="September">September</option>
+                                    <option value="October">October</option>
+                                    <option value="November">November</option>
+                                    <option value="December">December</option>
+                                </select>
+                            </div>
+
+                            <!-- Daypart -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Daypart</label>
+                                <select id="Daypart" name="Daypart" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="" disabled selected>Select a daypart</option>
+                                    <option value="evening">Evening</option>
+                                    <option value="morning">Morning</option>
+                                    <option value="morning_drive">Morning Drive</option>
+                                    <option value="afternoon">Afternoon</option>
+                                    <option value="afternoon_drive">Afternoon Drive</option>
+                                    <option value="mid_morning">Mid Morning</option>
+                                    <option value="overnight">Overnight</option>
+                                    <option value="late_night">Late Night</option>
+                                    <option value="late_evening">Late Evening</option>
+                                </select>
+                            </div>
+
+                            <!-- Spend -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Total Spend (?)</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">?</span>
+                                    <input type="number" step="any" id="Spend" name="Spend" placeholder="e.g., 100000" required class="w-full pl-8 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <!-- Campaign Dates -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Campaign Start Date</label>
+                                <input type="date" id="CampaignStart" name="CampaignStart" required 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Campaign End Date</label>
+                                <input type="date" id="CampaignEnd" name="CampaignEnd" required 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <!-- Normalize 30s -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Normalize 30s</label>
+                                <input type="number" step="any" id="Normalize_30s" name="Normalize_30s" placeholder="e.g., 1.0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+
+                            <!-- Ad Duration -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ad Duration (seconds)</label>
+                                <input type="number" step="any" id="Duration" name="Duration" placeholder="e.g., 30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Stations - Enhanced Searchable Dropdown -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Stations</label>
+                            <select id="stationSelect" name="stations" multiple="multiple" class="w-full" required>
+                                {% for st in stations %}
+                                <option value="{{ st }}">{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="stationNotFound" class="hidden mt-1 text-sm text-red-600">No matching stations found</div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 text-right">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-calculator mr-2"></i> Run Simulation
+                        </button>
+                    </div>
+                </form>
+
+                <!-- CSV Upload -->
+                <form action="/predict_batch/" method="post" enctype="multipart/form-data" class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Bulk CSV Upload</h2>
+                        <p class="text-gray-500 text-sm">Upload campaign data for multiple stations</p>
+                    </div>
+                    <div class="p-6">
+                        <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-file-csv text-4xl text-blue-500 mb-3"></i>
+                            <p class="font-medium">Drag & drop your CSV file here</p>
+                            <p class="text-sm text-gray-500 mt-1">or click to browse files</p>
+                            <input type="file" id="file" name="file" class="hidden" accept=".csv" required>
+                        </div>
+                        <div id="fileInfo" class="hidden mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm"></div>
+                        <p class="mt-2 text-xs text-gray-500">Required columns: Category, Month_name, Daypart, Station, Normalize 30s, Duration, CampaignStart, CampaignEnd. Spend optional.</p>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 text-right">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            <i class="fas fa-upload mr-2"></i> Upload and Predict
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section (Hidden initially) -->
+            <div class="space-y-8" id="resultsSection" {% if not results %}style="display: none;"{% endif %}>
+                <!-- Campaign Deliverables Section (Only shown after form submission) -->
+                <section class="mb-12 text-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Campaign Deliverables</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">
+                        Our Campaign will deliver a <span class="font-medium">{{ reach_pct|default('0', true) }}%</span> Reach @
+                            <span class="font-medium">{{ campaign_grp|default('0', true) }}</span> GRPs at an avg. freq. of
+                            <span class="font-medium">{{ avg_frequency|default('0', true) }}</span>
+                        over a <span class="font-medium">{{ campaign_duration_weeks|default('0', true) }} </span> period
+                    </p>
+                    <p class="text-gray-500 text-sm mt-2">
+                        Ad Duration: <span class="font-medium">{{ ad_duration|default('0', true) }} seconds</span> per spot
+                    </p>
+                </section>
+
+                <!-- Summary Cards - Full Width -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Campaign Summary</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                            <p class="text-sm font-medium text-blue-700">Total Spend</p>
+                            <p class="text-2xl font-bold text-blue-600">?{{ total_spend if total_spend else '0.00' }}</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                            <p class="text-sm font-medium text-purple-700">Aggregate TRP</p>
+                            <p class="text-2xl font-bold text-purple-600">{{ campaign_trp if campaign_trp else '0.00' }}</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                            <p class="text-sm font-medium text-green-700">Aggregate GRP</p>
+                            <p class="text-2xl font-bold text-green-600">{{ campaign_grp if campaign_grp else '0.00' }}</p>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                            <p class="text-sm font-medium text-yellow-700">Avg. CPRP</p>
+                            <p class="text-2xl font-bold text-yellow-600">?{{ avg_cprp if avg_cprp else '0.00' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Reach Metrics - Table Format -->
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800">Advanced Reach Metrics</h2>
+    </div>
+    <div class="p-6">
+        <!-- New Info Row -->
+        <table class="compact-table w-full mb-6">
+            <thead>
+                <tr>
+                    <th class="border border-gray-200" colspan="3">Company Logo</th>
+                    <th class="border border-gray-200" colspan="2">Audience</th>
+                    <th class="border border-gray-200" colspan="2">Campaign Duration</th>
+                    <th class="border border-gray-200" colspan="3">Media Budget</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border border-gray-200" colspan="3">
+                        <img src="https://images.ctfassets.net/pmzhtobns06n/2lwDnQV5TUAx15z7Z2FYWw/63e169e6c0155db88194f2a506b260e8/Cadbury_GlobalNavigation_BrandLogo_Desktop.svg?q=80" alt="Company Logo" class="company-logo mx-auto">
+                    </td>
+                    <td class="border border-gray-200" colspan="2">{{ Category }}</td>
+                    <td class="border border-gray-200" colspan="2">{{ campaign_duration_weeks if campaign_duration_weeks else '0' }} weeks</td>
+                    <td class="border border-gray-200" colspan="3">?{{ total_spend if total_spend else '0.00' }}</td>
+                </tr>
+            </tbody>
+            <!-- Original Metrics Row -->
+            <thead>
+                <tr>
+                    <th class="border border-gray-200">Paid Reach</th>
+                    <th class="border border-gray-200">Owned Reach</th>
+                    <th class="border border-gray-200">Earned Reach</th>
+                    <th class="border border-gray-200">Total Reach</th>
+                    <th class="border border-gray-200">Avg Frequency</th>
+                    <th class="border border-gray-200">Cost by Reach %</th>
+                    <th class="border border-gray-200">Multi-Channel GRP</th>
+                    <th class="border border-gray-200">Cost per GRP</th>
+                    <th class="border border-gray-200">Multi-channel ARP</th>
+                    <th class="border border-gray-200">Cost per ARP</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border border-gray-200">{{ paid_reach if paid_reach else '0' }}</td>
+                    <td class="border border-gray-200">{{ owned_reach if owned_reach else '0' }}</td>
+                    <td class="border border-gray-200">{{ earned_reach if earned_reach else '0' }}</td>
+                    <td class="border border-gray-200">{{ total_reach if total_reach else '0' }}</td>
+                    <td class="border border-gray-200">{{ avg_frequency if avg_frequency else '0.0' }}</td>
+                    <td class="border border-gray-200">?{{ cost_by_reach_pct if cost_by_reach_pct else '0.00' }}</td>
+                    <td class="border border-gray-200">{{ multi_channel_grp if multi_channel_grp else '0.00' }}</td>
+                    <td class="border border-gray-200">?{{ cost_per_grp if cost_per_grp else '0.00' }}</td>
+                    <td class="border border-gray-200">{{ multi_channel_arp if multi_channel_arp else '0.00' }}</td>
+                    <td class="border border-gray-200">?{{ cost_per_arp if cost_per_arp else '0.00' }}</td>
+                </tr>
+            </tbody>
+            <!-- New Channel/Activity Row -->
+            <thead>
+                <tr>
+                    <th class="border border-gray-200" colspan="5">Channel/Activity</th>
+                    <th class="border border-gray-200">Investment</th>
+                    <th class="border border-gray-200">Allocate %</th>
+                    <th class="border border-gray-200">Reach %</th>
+                    <th class="border border-gray-200">Exclusive Reach %</th>
+                    <th class="border border-gray-200">Cost Per Reach Point</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border border-gray-200 p-0 align-top" colspan="5" style="position: relative;">
+                        <div class="p-2" style="height: 200px;">
+                            <canvas id="reachSpendChart"></canvas>
+                        </div>
+                    </td>
+                    <td class="border border-gray-200 align-top">?{{ total_spend if total_spend else '0.00' }}</td>
+                    <td class="border border-gray-200 align-top">100%</td>
+                    <td class="border border-gray-200 align-top">{{ reach_pct if reach_pct else '0' }}%</td>
+                    <td class="border border-gray-200 align-top">0%</td>
+                    <td class="border border-gray-200 align-top">?{{ avg_cprp if avg_cprp else '0.00' }}</td>
+                </tr>
+            </tbody>
+        </table>  
+    </div>
+</div>
+
+
+                <!-- Station Performance - Full Width -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Station Performance</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Station</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medium</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TRP</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GRP</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <span class="tooltip">Reach (000s)
+                                                <span class="tooltiptext">Estimated number of people reached (in thousands)</span>
+                                            </span>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <span class="tooltip">Frequency
+                                                <span class="tooltiptext">Average number of times audience is exposed</span>
+                                            </span>
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <span class="tooltip">CPRP (?)
+                                                <span class="tooltiptext">Cost Per Rating Point</span>
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% if results %}
+                                        {% for row in results %}
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap font-medium">{{ row.Station }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ row.Medium }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ '%.2f'|format(row.TRP) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ '%.2f'|format(row.GRP) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ '{:,.0f}'.format(row.Reach) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ '%.1f'|format(row.Frequency) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ '{:,.2f}'.format(row.CPRP) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">No results yet. Run a simulation to see data.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Visualization - Full Width -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Performance Visualization</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- TRP Chart -->
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-3">TRP by Station</h3>
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="trpChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- GRP Chart -->
+                        <div>
+                            <h3 class="font-medium text-gray-700 mb-3">GRP by Station</h3>
+                            <div class="chart-container" style="height: 300px;">
+                                <canvas id="grpChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-50 border-t border-gray-200 mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-sm text-gray-500">
+                <p>© 2025 Elue. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        // Initialize Enhanced Station Dropdown
+        $(document).ready(function() {
+            $('#stationSelect').select2({
+                placeholder: "Select stations or type to search...",
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 0,
+                closeOnSelect: false,
+                dropdownAutoWidth: true,
+                language: {
+                    noResults: function() {
+                        $('#stationNotFound').removeClass('hidden');
+                        return "No matching stations found";
+                    },
+                    searching: function() {
+                        $('#stationNotFound').addClass('hidden');
+                    }
+                }
+            }).on('select2:open', function() {
+                setTimeout(() => {
+                    document.querySelector('.select2-search__field').focus();
+                }, 0);
+            }).on('select2:close', function() {
+                $('#stationNotFound').addClass('hidden');
+            });
+
+            // Handle file upload UI
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('file');
+            
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', (e) => {
+                if(e.target.files.length) {
+                    document.getElementById('fileInfo').innerHTML = `
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Selected: <strong>${e.target.files[0].name}</strong>
+                    `;
+                    document.getElementById('fileInfo').classList.remove('hidden');
+                }
+            });
+
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            }
+
+            function unhighlight() {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            }
+
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInput.files = files;
+                
+                if(files.length) {
+                    document.getElementById('fileInfo').innerHTML = `
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Selected: <strong>${files[0].name}</strong>
+                    `;
+                    document.getElementById('fileInfo').classList.remove('hidden');
+                }
+            }
+
+            // Show loading spinner on form submit
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', () => {
+                    document.getElementById('loading').classList.remove('hidden');
+                });
+            });
+
+            // Initialize charts if results exist
+            // {% if results %}
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('initialHero').style.display = 'none';
+            
+            // Convert Jinja results to JS
+            const results = JSON.parse('{{ results | tojson | safe }}');
+            
+            // Sort results by TRP (descending)
+            const sortedResults = [...results].sort((a, b) => b.TRP - a.TRP);
+
+            // Color mapping for mediums
+            const mediumColors = {
+                'TV': '#4f46e5',  // Indigo
+                'Radio': '#10b981', // Emerald
+                'Other': '#6366f1' // Light indigo
+            };
+
+            // Common chart options
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            };
+
+            // TRP Chart (Bar)
+            new Chart(document.getElementById('trpChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedResults.map(r => r.Station),
+                    datasets: [{
+                        label: 'TRP',
+                        data: sortedResults.map(r => r.TRP),
+                        backgroundColor: sortedResults.map(r => mediumColors[r.Medium]),
+                        borderRadius: 4,
+                        barThickness: 20
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // GRP Chart (Bar)
+            new Chart(document.getElementById('grpChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedResults.map(r => r.Station),
+                    datasets: [{
+                        label: 'GRP',
+                        data: sortedResults.map(r => r.GRP),
+                        backgroundColor: sortedResults.map(r => mediumColors[r.Medium]),
+                        borderRadius: 4,
+                        barThickness: 20
+                    }]
+                },
+                options: chartOptions
+            });
+            // {% endif %}
+        });
+    </script>
+  <script>
+    // Initialize the reach vs spend chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('reachSpendChart').getContext('2d');
+        
+        // Get form data for dynamic chart generation
+        const totalSpend = parseFloat('{{ total_spend if total_spend else 0 }}');
+        const category = '{{ Category }}';
+        const reachPct = parseFloat('{{ reach_pct if reach_pct else 0 }}');
+        
+        // Get selected stations and their mediums
+        const stationData = JSON.parse('{{ results | tojson | safe }}');
+        
+        // Group stations by medium
+        const mediums = {};
+        stationData.forEach(station => {
+            if (!mediums[station.Medium]) {
+                mediums[station.Medium] = [];
+            }
+            mediums[station.Medium].push(station);
+        });
+        
+        // Generate spend levels based on total spend
+        const maxSpend = Math.max(totalSpend * 2, 500000000); // At least 500M or 2x total spend
+        const spendLevels = [0];
+        for (let i = 1; i <= 5; i++) {
+            spendLevels.push(Math.round((maxSpend / 5) * i));
+        }
+        
+        // Generate labels for x-axis
+        const spendLabels = spendLevels.map(spend => {
+            if (spend >= 1000000000) {
+                return '?' + (spend / 1000000000).toFixed(1) + 'B';
+            } else if (spend >= 1000000) {
+                return '?' + (spend / 1000000).toFixed(0) + 'M';
+            } else if (spend >= 1000) {
+                return '?' + (spend / 1000).toFixed(0) + 'K';
+            } else {
+                return '?' + spend;
+            }
+        });
+        
+        // Calculate reach percentages for each medium at different spend levels
+        const mediumDatasets = [];
+        const mediumColors = {
+            'TV': '#3b82f6',
+            'Radio': '#10b981', 
+            'Digital': '#8b5cf6',
+            'Other': '#6366f1'
+        };
+        
+        // For each medium type, create a dataset
+        Object.keys(mediums).forEach(medium => {
+            const stations = mediums[medium];
+            const totalTRP = stations.reduce((sum, station) => sum + station.TRP, 0);
+            
+            // Calculate reach curve based on spend levels
+            const reachData = spendLevels.map(spend => {
+                if (spend === 0) return 0;
+                
+                // Simplified model: reach increases with spend but has diminishing returns
+                const efficiencyFactor = medium === 'TV' ? 0.8 : medium === 'Radio' ? 0.6 : 0.7;
+                const maxPotentialReach = medium === 'TV' ? 85 : medium === 'Radio' ? 60 : 75;
+                
+                // Calculate reach percentage based on spend
+                const spendRatio = spend / maxSpend;
+                const reach = maxPotentialReach * (1 - Math.exp(-efficiencyFactor * spendRatio * 5));
+                
+                return Math.min(Math.round(reach), maxPotentialReach);
+            });
+            
+            mediumDatasets.push({
+                label: medium,
+                data: reachData,
+                borderColor: mediumColors[medium] || '#6366f1',
+                backgroundColor: mediumColors[medium] ? 
+                    mediumColors[medium].replace(')', ', 0.1)').replace('rgb', 'rgba') : 
+                    'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                fill: false,
+                pointBackgroundColor: mediumColors[medium] || '#6366f1',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            });
+        });
+        
+        // Create the chart
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: spendLabels,
+                datasets: mediumDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Reach Projection for ${category} Campaign`,
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw}% reach`;
+                            },
+                            afterLabel: function(context) {
+                                const spend = spendLevels[context.dataIndex];
+                                if (spend > 0) {
+                                    return `Spend: ${spendLabels[context.dataIndex]}`;
+                                }
+                                return '';
+                            }
+                        },
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: {
+                            size: 14
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Reach (%)',
+                            font: {
+                                size: 12,
+                            },
+                            padding: {
+                                top: 5,
+                                bottom: 10
+                            }
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Spend',
+                            font: {
+                                size: 12,
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 5
+                            }
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            maxRotation: 0
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                elements: {
+                    line: {
+                        borderWidth: 3
+                    }
+                }
+            }
+        });
+        
+        // Increase the chart container height
+        const chartContainer = document.querySelector('#reachSpendChart').parentElement;
+        chartContainer.style.height = '600px'; // Increased from 200px to 300px
+    });
+</script>
+</body>
+</html>
+
+
+main.py
+------------------------------------------------------------------------------------------------------------------------------------
+from fastapi import FastAPI, Form, Request, UploadFile, File
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
+import pandas as pd
+import numpy as np
+import joblib
+from typing import List
+from datetime import datetime
+import math
+
+app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
+
+app.mount(
+    "/static",
+    StaticFiles(directory=BASE_DIR.parent / "static"),
+    name="static",
+)
+templates = Jinja2Templates(directory=BASE_DIR.parent / "templates")
+
+# Load pre-trained models
+stage1_pipeline = joblib.load(BASE_DIR.parent / "models" / "rf_pipeline.pkl")
+stage2_pipeline = joblib.load(BASE_DIR.parent / "models" / "rf_pipeline2.pkl")
+
+# Function to detect medium based on station name
+def detect_medium(station_name: str) -> str:
+    """Determine the medium (TV or Radio) based on station name."""
+    station_lower = station_name.lower()
+    if any(keyword in station_lower for keyword in ['tv', 'dstv', 'gotv', 'nta', 'mtv', 'silverbird', 'hi tv']):
+        return "TV"
+    elif any(keyword in station_lower for keyword in ['fm', 'radio']):
+        return "Radio"
+    else:
+        return "Other"
+
+# Updated reach calculation with medium-specific parameters
+def calculate_reach(grp: float, medium: str) -> float:
+    """Calculate reach in thousands based on GRP and medium type (for reference metrics)"""
+    # Universe estimates per GRP (in thousands)
+    universe_params = {
+        'TV': 100,    # 1 GRP = 100,000 people for TV
+        'Radio': 50,   # 1 GRP = 50,000 people for Radio
+        'Other': 30    # 1 GRP = 30,000 people for other mediums
+    }
+    universe = universe_params.get(medium, 30)
+    return min(grp * universe, 10000)  # Cap at 10 million
+
+def calculate_reach_percentage(grp: float, medium: str) -> float:
+    """Calculate reach percentage based on medium (for reference)"""
+    market_size = {
+        'TV': 10000,   # 10 million TV market
+        'Radio': 5000, # 5 million radio market
+        'Other': 3000  # 3 million other
+    }
+    reach = calculate_reach(grp, medium)
+    return min((reach / market_size.get(medium, 3000)) * 100, 100)
+
+def calculate_frequency(grp: float, reach: float) -> float:
+    """Calculate average frequency"""
+    return grp / (reach / 100) if reach > 0 else 0
+
+def calculate_cprp(spend: float, grp: float) -> float:
+    """Calculate Cost Per Rating Point"""
+    return spend / grp if grp > 0 else 0
+
+def calculate_campaign_duration(start_date: str, end_date: str) -> float:
+    """Calculate campaign duration in weeks from start and end dates"""
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        duration_days = (end - start).days
+        return max(duration_days / 7, 0.1)  # Minimum 0.1 weeks
+    except:
+        return 0.0
+
+# Updated metrics calculation functions (conventional approach)
+def calculate_paid_reach(grp: float, frequency: float, medium: str) -> float:
+    """
+    Calculate paid reach as a percentage of total reach based on GRP and frequency.
+    Paid reach is the full reach of paid media (100%) by conventional definition.
+    """
+    if not isinstance(grp, (int, float)) or grp < 0:
+        raise ValueError("GRP must be a non-negative number")
+    if not isinstance(frequency, (int, float)) or frequency <= 0:
+        raise ValueError("Frequency must be a positive number")
+    if not isinstance(medium, str) or not medium.strip():
+        raise ValueError("Medium must be a non-empty string")
+
+    total_reach_pct = min(grp / frequency, 100)  # Conventional reach percentage
+    return total_reach_pct  # 100% paid reach
+
+def calculate_owned_reach(grp: float, frequency: float, medium: str) -> float:
+    """Calculate owned reach as a percentage (0% by default, adjust if data supports)"""
+    return 0.0  # Default to 0% unless validated by data
+
+def calculate_earned_reach(grp: float, frequency: float, medium: str) -> float:
+    """Calculate earned reach as a percentage (0% by default, adjust if data supports)"""
+    return 0.0  # Default to 0% unless validated by data
+
+def calculate_total_reach(grp: float, frequency: float, medium: str) -> float:
+    """Calculate total reach as a percentage"""
+    if not isinstance(grp, (int, float)) or grp < 0:
+        raise ValueError("GRP must be a non-negative number")
+    if not isinstance(frequency, (int, float)) or frequency <= 0:
+        raise ValueError("Frequency must be a positive number")
+    if not isinstance(medium, str) or not medium.strip():
+        raise ValueError("Medium must be a non-empty string")
+
+    return min(grp / frequency, 100)  # Return as percentage
+
+def calculate_cost_by_reach_percentage(spend: float, reach_pct: float) -> float:
+    """Calculate cost by reach percentage"""
+    return spend / reach_pct if reach_pct > 0 else 0
+
+def calculate_multi_channel_grp(grp: float) -> float:
+    """Calculate multi-channel GRP (10% higher than regular GRP)"""
+    return grp * 1.1
+
+def calculate_cost_per_grp(spend: float, multi_channel_grp: float) -> float:
+    """Calculate cost per GRP"""
+    return spend / multi_channel_grp if multi_channel_grp > 0 else 0
+
+def calculate_multi_channel_arp(grp: float) -> float:
+    """Calculate multi-channel ARP (Average Rating Point)"""
+    return grp * 0.9  # Assuming ARP is 90% of GRP
+
+def calculate_cost_per_arp(spend: float, multi_channel_arp: float) -> float:
+    """Calculate cost per ARP"""
+    return spend / multi_channel_arp if multi_channel_arp > 0 else 0
+
+def load_stations():
+    try:
+        stations_df = pd.read_csv(
+            BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv",
+            usecols=['Station'],
+            dtype={'Station': 'string'}
+        )
+        stations = stations_df['Station'].unique().tolist()
+        return sorted(stations)
+    except Exception as e:
+        print(f"Error loading stations: {e}")
+        return [
+            "am yoruba dstv", "slashfm ibadan", "frsc fm abuja",
+            "mtv base", "nta sport 24", "zeeworld dstv"
+        ]
+
+@app.get("/", response_class=HTMLResponse)
+async def read_form(request: Request):
+    stations = load_stations()
+    # Provide default values for all template variables
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "stations": stations,
+        "results": [],  # Empty list instead of undefined
+        "campaign_trp": "0.00",
+        "campaign_grp": "0.00",
+        "total_spend": "0.00",
+        "avg_cprp": "0.00",
+        "reach_pct": "0.0",
+        "campaign_duration_weeks": "0.0",
+        "avg_frequency": "0.0",
+        "ad_duration": "0",
+        "paid_reach": "0.0%",
+        "owned_reach": "0.0%",
+        "earned_reach": "0.0%",
+        "total_reach": "0.0%",
+        "cost_by_reach_pct": "0.00",
+        "multi_channel_grp": "0.00",
+        "cost_per_grp": "0.00",
+        "multi_channel_arp": "0.00",
+        "cost_per_arp": "0.00",
+        "Category": ""
+    })
+
+@app.post("/predict/", response_class=HTMLResponse)
+async def predict(
+    request: Request,
+    Category: str = Form(...),
+    Month_name: str = Form(...),
+    Daypart: str = Form(...),
+    total_spend: float = Form(..., alias="Spend"),
+    Normalize_30s: float = Form(...),
+    Duration: float = Form(...),
+    CampaignStart: str = Form(...),
+    CampaignEnd: str = Form(...),
+    stations: List[str] = Form(...)
+):
+    df = pd.DataFrame({
+        "Category": Category,
+        "Month_name": Month_name,
+        "Daypart": Daypart,
+        "Station": stations
+    })
+
+    n = len(stations)
+    df["Station_Spend"] = total_spend / n
+    df["weight"] = 1 / n
+    df["Medium"] = df["Station"].apply(detect_medium)
+
+    df["log_Spend"] = np.log1p(df["Station_Spend"])
+    X1 = df[["log_Spend", "Category", "Month_name", "Daypart", "Station"]]
+    df["Predicted_log_TRP"] = stage1_pipeline.predict(X1)
+    df["Predicted_TRP"] = np.expm1(df["Predicted_log_TRP"])
+
+    X2 = pd.DataFrame({
+        "Predicted_log_TRP": df["Predicted_log_TRP"],
+        "Normalize 30s": Normalize_30s,
+        "Duration": Duration
+    })
+    df["Predicted_log_GRP"] = stage2_pipeline.predict(X2)
+    df["Predicted_GRP"] = np.expm1(df["Predicted_log_GRP"])
+
+    # Calculate metrics with medium-specific parameters
+    df["Reach"] = df.apply(lambda x: calculate_reach(x["Predicted_GRP"], x["Medium"]), axis=1)
+    df["Frequency"] = df.apply(lambda x: calculate_frequency(x["Predicted_GRP"], x["Reach"]), axis=1)
+    df["CPRP"] = df.apply(lambda x: calculate_cprp(x["Station_Spend"], x["Predicted_GRP"]), axis=1)
+
+    campaign_trp = (df["Predicted_TRP"] * df["weight"]).sum()
+    campaign_grp = (df["Predicted_GRP"] * df["weight"]).sum()
+    avg_cprp = calculate_cprp(total_spend, campaign_grp)
+    
+    # Calculate campaign-wide metrics
+    total_reach = df["Reach"].sum()
+    avg_medium = df["Medium"].mode()[0] if not df["Medium"].empty else "TV"
+    reach_pct = calculate_reach_percentage(campaign_grp, avg_medium)
+    campaign_duration_weeks = calculate_campaign_duration(CampaignStart, CampaignEnd)
+    avg_frequency = df["Frequency"].mean()
+
+    # Calculate the new metrics as percentages (conventional approach)
+    paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium)
+    owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium)
+    earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium)
+    total_reach_pct = calculate_total_reach(campaign_grp, avg_frequency, avg_medium)
+    cost_by_reach_pct = calculate_cost_by_reach_percentage(total_spend, reach_pct)
+    multi_channel_grp = calculate_multi_channel_grp(campaign_grp)
+    cost_per_grp = calculate_cost_per_grp(total_spend, multi_channel_grp)
+    multi_channel_arp = calculate_multi_channel_arp(campaign_grp)
+    cost_per_arp = calculate_cost_per_arp(total_spend, multi_channel_arp)
+
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "stations": load_stations(),
+        "results": df[[
+            "Station", "Medium", "Predicted_TRP", "Predicted_GRP", 
+            "Reach", "Frequency", "CPRP"
+        ]].rename(columns={
+            "Predicted_TRP": "TRP",
+            "Predicted_GRP": "GRP"
+        }).to_dict(orient="records") or [],  # Empty list if None
+        "campaign_trp": f"{campaign_trp:.2f}" if campaign_trp else "0.00",
+        "campaign_grp": f"{campaign_grp:.2f}" if campaign_grp else "0.00",
+        "total_spend": f"{total_spend:,.2f}" if total_spend else "0.00",
+        "avg_cprp": f"{avg_cprp:,.2f}" if avg_cprp else "0.00",
+        "reach_pct": f"{reach_pct:.1f}" if reach_pct else "0.0",
+        "campaign_duration_weeks": f"{campaign_duration_weeks:.1f}" if campaign_duration_weeks else "0.0",
+        "avg_frequency": f"{avg_frequency:.1f}" if avg_frequency else "0.0",
+        "ad_duration": f"{Duration}" if Duration else "0",
+        "paid_reach": f"{paid_reach_pct:.1f}%" if paid_reach_pct else "0.0%",
+        "owned_reach": f"{owned_reach_pct:.1f}%" if owned_reach_pct else "0.0%",
+        "earned_reach": f"{earned_reach_pct:.1f}%" if earned_reach_pct else "0.0%",
+        "total_reach": f"{total_reach_pct:.1f}%" if total_reach_pct else "0.0%",
+        "cost_by_reach_pct": f"{cost_by_reach_pct:,.2f}" if cost_by_reach_pct else "0.00",
+        "multi_channel_grp": f"{multi_channel_grp:.2f}" if multi_channel_grp else "0.00",
+        "cost_per_grp": f"{cost_per_grp:,.2f}" if cost_per_grp else "0.00",
+        "multi_channel_arp": f"{multi_channel_arp:.2f}" if multi_channel_arp else "0.00",
+        "cost_per_arp": f"{cost_per_arp:,.2f}" if cost_per_arp else "0.00",
+        "Category": Category or ""
+    })
+
+@app.post("/predict_batch/", response_class=HTMLResponse)
+async def predict_batch(request: Request, file: UploadFile = File(...)):
+    try:
+        df = pd.read_csv(file.file)
+
+        required = {"Category", "Month_name", "Daypart", "Station", "Normalize 30s", "Duration", "CampaignStart", "CampaignEnd"}
+        if not required.issubset(df.columns):
+            return templates.TemplateResponse("index.html", {
+                "request": request,
+                "stations": load_stations(),
+                "results": [],
+                "message": f"CSV must include: {', '.join(required)}",
+                "campaign_trp": "0.00",
+                "campaign_grp": "0.00",
+                "total_spend": "0.00",
+                "avg_cprp": "0.00",
+                "reach_pct": "0.0",
+                "campaign_duration_weeks": "0.0",
+                "avg_frequency": "0.0",
+                "ad_duration": "0",
+                "paid_reach": "0.0%",
+                "owned_reach": "0.0%",
+                "earned_reach": "0.0%",
+                "total_reach": "0.0%",
+                "cost_by_reach_pct": "0.00",
+                "multi_channel_grp": "0.00",
+                "cost_per_grp": "0.00",
+                "multi_channel_arp": "0.00",
+                "cost_per_arp": "0.00",
+                "Category": ""
+            })
+
+        if "Spend" in df.columns:
+            total_spend = df["Spend"].sum(skipna=True)
+            n = len(df)
+            df["Spend"] = df["Spend"].fillna(total_spend / n)
+        else:
+            return templates.TemplateResponse("index.html", {
+                "request": request,
+                "stations": load_stations(),
+                "results": [],
+                "message": "CSV must include a 'Spend' column",
+                "campaign_trp": "0.00",
+                "campaign_grp": "0.00",
+                "total_spend": "0.00",
+                "avg_cprp": "0.00",
+                "reach_pct": "0.0",
+                "campaign_duration_weeks": "0.0",
+                "avg_frequency": "0.0",
+                "ad_duration": "0",
+                "paid_reach": "0.0%",
+                "owned_reach": "0.0%",
+                "earned_reach": "0.0%",
+                "total_reach": "0.0%",
+                "cost_by_reach_pct": "0.00",
+                "multi_channel_grp": "0.00",
+                "cost_per_grp": "0.00",
+                "multi_channel_arp": "0.00",
+                "cost_per_arp": "0.00",
+                "Category": ""
+            })
+
+        df["Medium"] = df["Station"].apply(detect_medium)
+        campaign_duration_weeks = calculate_campaign_duration(
+            df["CampaignStart"].iloc[0],
+            df["CampaignEnd"].iloc[0]
+        )
+
+        df["Station_Spend"] = df["Spend"]
+        df["weight"] = df["Station_Spend"] / df["Station_Spend"].sum()
+
+        df["log_Spend"] = np.log1p(df["Station_Spend"])
+        X1 = df[["log_Spend", "Category", "Month_name", "Daypart", "Station"]]
+        df["Predicted_log_TRP"] = stage1_pipeline.predict(X1)
+        df["Predicted_TRP"] = np.expm1(df["Predicted_log_TRP"])
+
+        X2 = pd.DataFrame({
+            "Predicted_log_TRP": df["Predicted_log_TRP"],
+            "Normalize 30s": df["Normalize 30s"],
+            "Duration": df["Duration"]
+        })
+        df["Predicted_log_GRP"] = stage2_pipeline.predict(X2)
+        df["Predicted_GRP"] = np.expm1(df["Predicted_log_GRP"])
+
+        # Calculate metrics with medium-specific parameters
+        df["Reach"] = df.apply(lambda x: calculate_reach(x["Predicted_GRP"], x["Medium"]), axis=1)
+        df["Frequency"] = df.apply(lambda x: calculate_frequency(x["Predicted_GRP"], x["Reach"]), axis=1)
+        df["CPRP"] = df.apply(lambda x: calculate_cprp(x["Station_Spend"], x["Predicted_GRP"]), axis=1)
+
+        campaign_trp = (df["Predicted_TRP"] * df["weight"]).sum()
+        campaign_grp = (df["Predicted_GRP"] * df["weight"]).sum()
+        avg_cprp = calculate_cprp(total_spend, campaign_grp)
+        
+        # Calculate campaign-wide metrics
+        total_reach = df["Reach"].sum()
+        avg_medium = df["Medium"].mode()[0] if not df["Medium"].empty else "TV"
+        reach_pct = calculate_reach_percentage(campaign_grp, avg_medium)
+        avg_frequency = df["Frequency"].mean()
+        avg_ad_duration = df["Duration"].mean()
+
+        # Calculate the new metrics as percentages (conventional approach)
+        paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium)
+        owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium)
+        earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium)
+        total_reach_pct = calculate_total_reach(campaign_grp, avg_frequency, avg_medium)
+        cost_by_reach_pct = calculate_cost_by_reach_percentage(total_spend, reach_pct)
+        multi_channel_grp = calculate_multi_channel_grp(campaign_grp)
+        cost_per_grp = calculate_cost_per_grp(total_spend, multi_channel_grp)
+        multi_channel_arp = calculate_multi_channel_arp(campaign_grp)
+        cost_per_arp = calculate_cost_per_arp(total_spend, multi_channel_arp)
+
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "stations": load_stations(),
+            "results": df[[
+                "Station", "Medium", "Predicted_TRP", "Predicted_GRP", 
+                "Reach", "Frequency", "CPRP"
+            ]].rename(columns={
+                "Predicted_TRP": "TRP",
+                "Predicted_GRP": "GRP"
+            }).to_dict(orient="records") or [],  # Empty list if None
+            "campaign_trp": f"{campaign_trp:.2f}" if campaign_trp else "0.00",
+            "campaign_grp": f"{campaign_grp:.2f}" if campaign_grp else "0.00",
+            "total_spend": f"{total_spend:,.2f}" if total_spend else "0.00",
+            "avg_cprp": f"{avg_cprp:,.2f}" if avg_cprp else "0.00",
+            "reach_pct": f"{reach_pct:.1f}" if reach_pct else "0.0",
+            "campaign_duration_weeks": f"{campaign_duration_weeks:.1f}" if campaign_duration_weeks else "0.0",
+            "avg_frequency": f"{avg_frequency:.1f}" if avg_frequency else "0.0",
+            "ad_duration": f"{avg_ad_duration:.1f}" if avg_ad_duration else "0.0",
+            "paid_reach": f"{paid_reach_pct:.1f}%" if paid_reach_pct else "0.0%",
+            "owned_reach": f"{owned_reach_pct:.1f}%" if owned_reach_pct else "0.0%",
+            "earned_reach": f"{earned_reach_pct:.1f}%" if earned_reach_pct else "0.0%",
+            "total_reach": f"{total_reach_pct:.1f}%" if total_reach_pct else "0.0%",
+            "cost_by_reach_pct": f"{cost_by_reach_pct:,.2f}" if cost_by_reach_pct else "0.00",
+            "multi_channel_grp": f"{multi_channel_grp:.2f}" if multi_channel_grp else "0.00",
+            "cost_per_grp": f"{cost_per_grp:,.2f}" if cost_per_grp else "0.00",
+            "multi_channel_arp": f"{multi_channel_arp:.2f}" if multi_channel_arp else "0.00",
+            "cost_per_arp": f"{cost_per_arp:,.2f}" if cost_per_arp else "0.00",
+            "Category": df["Category"].iloc[0] if not df.empty else ""
+        })
+
+    except Exception as e:
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "stations": load_stations(),
+            "results": [],  # Empty results on error
+            "message": f"Error processing file: {str(e)}",
+            # Provide defaults for all other variables
+            "campaign_trp": "0.00",
+            "campaign_grp": "0.00",
+            "total_spend": "0.00",
+            "avg_cprp": "0.00",
+            "reach_pct": "0.0",
+            "campaign_duration_weeks": "0.0",
+            "avg_frequency": "0.0",
+            "ad_duration": "0",
+            "paid_reach": "0.0%",
+            "owned_reach": "0.0%",
+            "earned_reach": "0.0%",
+            "total_reach": "0.0%",
+            "cost_by_reach_pct": "0.00",
+            "multi_channel_grp": "0.00",
+            "cost_per_grp": "0.00",
+            "multi_channel_arp": "0.00",
+            "cost_per_arp": "0.00",
+            "Category": ""
+        })
+
+
+predict.py
+------------------------------------------------------------------------------------------------------------------------------------
+
+from huggingface_hub import hf_hub_download
+import pandas as pd
+import joblib
+import os
+from typing import Tuple
+
+# Constants
+HF_TOKEN = os.getenv("HUGGINGFACE_HUB_TOKEN")
+REPO_ID = "BigDavies/2staged-HalvingRandomSearchCV"
+MODEL_FILES = ["rf_pipeline.pkl", "rf_pipeline2.pkl"]
+
+def load_models() -> Tuple:
+    """
+    Load trained model pipelines from the Hugging Face Hub.
+    
+    Returns:
+        Tuple: (stage1_pipeline, stage2_pipeline)
+    """
+    loaded_models = {}
+    
+    for model_file in MODEL_FILES:
+        try:
+            path = hf_hub_download(
+                repo_id=REPO_ID,
+                filename=model_file,
+                token=HF_TOKEN
+            )
+            with open(path, "rb") as f:
+                loaded_models[model_file] = joblib.load(f)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load {model_file} from Hugging Face Hub: {e}")
+    
+    return loaded_models["rf_pipeline.pkl"], loaded_models["rf_pipeline2.pkl"]
+
+
+def make_prediction(stage1_pipeline, stage2_pipeline, form_data: dict) -> Tuple[float, float]:
+    """
+    Generate TRP and GRP predictions based on form input.
+
+    Args:
+        stage1_pipeline: Trained pipeline for stage 1 (Spend ? TRP)
+        stage2_pipeline: Trained pipeline for stage 2 (TRP + context ? GRP)
+        form_data (dict): Form input data from user
+
+    Returns:
+        Tuple[float, float]: (Predicted TRP, Predicted GRP)
+    """
+    # Prepare input for Stage 1
+    stage1_df = pd.DataFrame([{
+        "Category": form_data["Category"],
+        "Month": form_data["Month"],
+        "Daypart": form_data["Daypart"],
+        "Spend": float(form_data["Spend"]),
+        "Station": form_data["Station"]
+    }])
+
+    predicted_trp = stage1_pipeline.predict(stage1_df)[0]
+
+    # Prepare input for Stage 2
+    stage2_df = pd.DataFrame([{
+        "Predicted_TRP": predicted_trp,
+        "Normalize 30s": float(form_data["Normalize_30s"]),
+        "Duration": float(form_data["Duration"])
+    }])
+
+    predicted_grp = stage2_pipeline.predict(stage2_df)[0]
+
+    return predicted_trp, predicted_grp
