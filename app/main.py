@@ -1062,6 +1062,25 @@ async def read_form(request: Request):
         "other_exclusive": 0
     })
 
+def debug_feature_names():
+    """Debug function to see all feature names and their prefixes"""
+    print("=== DEBUGGING FEATURE NAMES ===")
+    if hasattr(stage1_pipeline, 'named_steps'):
+        for step_name, step in stage1_pipeline.named_steps.items():
+            if hasattr(step, 'get_feature_names_out'):
+                try:
+                    features = step.get_feature_names_out()
+                    print(f"Step '{step_name}' has {len(features)} features:")
+                    # Print features that might be stations
+                    station_features = [f for f in features if any(prefix in f.lower() for prefix in ['station', 'cat_', 'tv', 'fm', 'radio'])]
+                    for feature in station_features[:20]:  # First 20 station-like features
+                        print(f"  - {feature}")
+                except Exception as e:
+                    print(f"Error in step '{step_name}': {e}")
+
+# Call this temporarily in your main function or after model loading
+debug_feature_names()
+
 @app.post("/predict/", response_class=HTMLResponse)
 async def predict(
     request: Request,
