@@ -723,6 +723,87 @@ stage2_pipeline = joblib.load(BASE_DIR.parent / "models" / "rf_pipeline2.pkl")
 # Allowed file extensions for logo upload
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.svg'}
 
+# Function to extract stations from trained model
+def load_stations_from_model():
+    """Extract stations from the trained model's feature names"""
+    try:
+        print("=== EXTRACTING STATIONS FROM MODEL ===")
+        
+        # Get the column transformer from your pipeline
+        if hasattr(stage1_pipeline, 'named_steps'):
+            print("Model has named_steps:", list(stage1_pipeline.named_steps.keys()))
+            
+            # Extract preprocessing steps to get feature names
+            preprocessor = stage1_pipeline.named_steps.get('columntransformer', None)
+            if preprocessor is None:
+                # Try to find the preprocessing step by iterating
+                for step_name, step in stage1_pipeline.named_steps.items():
+                    if hasattr(step, 'get_feature_names_out'):
+                        preprocessor = step
+                        print(f"Found preprocessor in step: {step_name}")
+                        break
+            
+            if preprocessor and hasattr(preprocessor, 'get_feature_names_out'):
+                feature_names = preprocessor.get_feature_names_out()
+                print(f"Total features: {len(feature_names)}")
+                
+                # Extract station names from feature names
+                stations = []
+                for feature in feature_names:
+                    if 'Station_' in feature:
+                        station_name = feature.replace('Station_', '')
+                        stations.append(station_name)
+                
+                if stations:
+                    print(f"Extracted {len(stations)} stations from model")
+                    return sorted(stations)
+                else:
+                    print("No station features found in model")
+        
+        # Alternative: Check if model has feature_names_in_ attribute
+        if hasattr(stage1_pipeline, 'feature_names_in_'):
+            feature_names = stage1_pipeline.feature_names_in_
+            print(f"Features from feature_names_in_: {len(feature_names)}")
+            stations = []
+            for feature in feature_names:
+                if 'Station_' in feature:
+                    station_name = feature.replace('Station_', '')
+                    stations.append(station_name)
+            if stations:
+                print(f"Extracted {len(stations)} stations from feature_names_in_")
+                return sorted(stations)
+        
+        # Fallback: If we can't extract from model, use a comprehensive list
+        print("Could not extract stations from model, using fallback list")
+        return get_fallback_stations()
+        
+    except Exception as e:
+        print(f"Error extracting stations from model: {e}")
+        return get_fallback_stations()
+
+def get_fallback_stations():
+    """Comprehensive fallback station list"""
+    return [
+        # TV Stations
+        "am yoruba dstv", "mtv base", "nta sport 24", "zeeworld dstv", 
+        "silverbird tv", "hi tv", "gotv", "dstv", "startimes", "supersport",
+        "afro music dstv", "nta international", "ait network", "tvc news",
+        "channels tv", "africa magic", "waptv", "mbc tv", "rts tv", "kada tv",
+        
+        # Radio Stations
+        "slashfm ibadan", "frsc fm abuja", "wazobia fm lagos", "cool fm abuja",
+        "raypower fm", "beat fm", "naija fm", "brila fm", "splash fm", "rhythm fm",
+        "city fm", "traffic radio", "inspiration fm", "nigeria info", "smooth fm",
+        
+        # Other Stations
+        "online platform", "social media", "digital billboard", "mobile app",
+        "youtube channel", "facebook platform", "instagram channel", "twitter platform"
+    ]
+
+def load_stations():
+    """Load stations from model or fallback"""
+    return load_stations_from_model()
+
 # Load historical data for data-driven calibrations
 def load_historical_data():
     try:
@@ -943,22 +1024,6 @@ def calculate_exclusive_reach(medium: str, grp: float, total_grp: float, other_m
     exclusive_adjustment = medium_grp_share * 0.3  # More dominance = more exclusivity
     
     return min((base_exclusive + exclusive_adjustment) * 100, 30.0)  # Cap at 30%
-
-def load_stations():
-    try:
-        stations_df = pd.read_csv(
-            BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv",
-            usecols=['Station'],
-            dtype={'Station': 'string'}
-        )
-        stations = stations_df['Station'].unique().tolist()
-        return sorted(stations)
-    except Exception as e:
-        print(f"Error loading stations: {e}")
-        return [
-            "am yoruba dstv", "slashfm ibadan", "frsc fm abuja",
-            "mtv base", "nta sport 24", "zeeworld dstv"
-        ]
 
 @app.get("/", response_class=HTMLResponse)
 async def read_form(request: Request):
