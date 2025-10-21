@@ -746,28 +746,33 @@ def load_stations_from_model():
             if preprocessor and hasattr(preprocessor, 'get_feature_names_out'):
                 feature_names = preprocessor.get_feature_names_out()
                 print(f"Total features: {len(feature_names)}")
+                print(f"First 20 features: {feature_names[:20]}")  # Show more features for debugging
                 
-                # Extract station names from feature names
+                # Extract station names from feature names - FIXED: use 'cat__' prefix
                 stations = []
                 for feature in feature_names:
-                    if 'Station_' in feature:
-                        station_name = feature.replace('Station_', '')
+                    # Look for features with 'cat__' prefix (your actual prefix)
+                    if 'cat__' in feature:
+                        # Remove the 'cat__' prefix to get the station name
+                        station_name = feature.replace('cat__', '')
                         stations.append(station_name)
                 
                 if stations:
                     print(f"Extracted {len(stations)} stations from model")
+                    print(f"Sample stations: {stations[:10]}")  # Show first 10 stations
                     return sorted(stations)
                 else:
-                    print("No station features found in model")
+                    print("No station features found with 'cat__' prefix")
         
         # Alternative: Check if model has feature_names_in_ attribute
         if hasattr(stage1_pipeline, 'feature_names_in_'):
             feature_names = stage1_pipeline.feature_names_in_
             print(f"Features from feature_names_in_: {len(feature_names)}")
+            print(f"First 20 features: {feature_names[:20]}")
             stations = []
             for feature in feature_names:
-                if 'Station_' in feature:
-                    station_name = feature.replace('Station_', '')
+                if 'cat__' in feature:
+                    station_name = feature.replace('cat__', '')
                     stations.append(station_name)
             if stations:
                 print(f"Extracted {len(stations)} stations from feature_names_in_")
@@ -779,6 +784,8 @@ def load_stations_from_model():
         
     except Exception as e:
         print(f"Error extracting stations from model: {e}")
+        import traceback
+        traceback.print_exc()
         return get_fallback_stations()
 
 def get_fallback_stations():
@@ -803,6 +810,24 @@ def get_fallback_stations():
 def load_stations():
     """Load stations from model or fallback"""
     return load_stations_from_model()
+
+# Debug function to see model features
+def debug_model_features():
+    """Debug function to see all model features"""
+    print("=== DEBUGGING MODEL FEATURES ===")
+    if hasattr(stage1_pipeline, 'named_steps'):
+        for step_name, step in stage1_pipeline.named_steps.items():
+            if hasattr(step, 'get_feature_names_out'):
+                try:
+                    features = step.get_feature_names_out()
+                    print(f"Step '{step_name}' has {len(features)} features")
+                    # Show categorical features specifically
+                    cat_features = [f for f in features if 'cat__' in f]
+                    print(f"Found {len(cat_features)} categorical features with 'cat__' prefix")
+                    for feature in cat_features[:20]:  # First 20 categorical features
+                        print(f"  - {feature}")
+                except Exception as e:
+                    print(f"Error in step '{step_name}': {e}")
 
 # Load historical data for data-driven calibrations
 def load_historical_data():
@@ -1027,7 +1052,12 @@ def calculate_exclusive_reach(medium: str, grp: float, total_grp: float, other_m
 
 @app.get("/", response_class=HTMLResponse)
 async def read_form(request: Request):
+    # Temporary debug to see what's in the model
+    debug_model_features()
+    
     stations = load_stations()
+    print(f"Loaded {len(stations)} stations for dropdown")
+    
     # Provide default values for all template variables
     return templates.TemplateResponse("index.html", {
         "request": request,
