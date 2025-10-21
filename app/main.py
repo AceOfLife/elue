@@ -863,10 +863,16 @@ def debug_model_features():
                 except Exception as e:
                     print(f"Error in step '{step_name}': {e}")
 
-# Load historical data for data-driven calibrations
+# Load historical data for data-driven calibrations - WITH ERROR HANDLING
 def load_historical_data():
     try:
-        historical_df = pd.read_csv(BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv")
+        historical_path = BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv"
+        if not historical_path.exists():
+            print(f"Historical data file not found at {historical_path}")
+            print("Using default efficiency values")
+            return {'TV': 0.8, 'Radio': 0.6, 'Other': 0.7}
+            
+        historical_df = pd.read_csv(historical_path)
         # Assume historical data has 'Medium' (derived), 'GRP', and estimate reach efficiency
         # For data-driven: Compute average GRP per medium to infer efficiency caps
         historical_df['Medium'] = historical_df['Station'].apply(detect_medium)
@@ -888,13 +894,25 @@ def load_historical_data():
         return {'TV': 0.8, 'Radio': 0.6, 'Other': 0.7}
 
 HISTORICAL_EFFICIENCIES = load_historical_data()
-print(f"Data-driven efficiencies from historical: {HISTORICAL_EFFICIENCIES}")
+print(f"Data-driven efficiencies: {HISTORICAL_EFFICIENCIES}")
 
-# Load historical metrics data for all calculations
+# Load historical metrics data for all calculations - WITH ERROR HANDLING
 def load_historical_metrics():
     """Load historical data to calibrate all metrics"""
     try:
-        historical_df = pd.read_csv(BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv")
+        historical_path = BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv"
+        if not historical_path.exists():
+            print(f"Historical data file not found at {historical_path}")
+            print("Using default metric values")
+            return {
+                'paid_ratios': {'TV': 0.85, 'Radio': 0.90, 'Other': 0.80},
+                'owned_ratios': {'TV': 0.10, 'Radio': 0.05, 'Other': 0.15},
+                'earned_ratios': {'TV': 0.05, 'Radio': 0.05, 'Other': 0.05},
+                'multi_channel_uplift': {'TV': 1.15, 'Radio': 1.10, 'Other': 1.12},
+                'arp_ratios': {'TV': 0.85, 'Radio': 0.88, 'Other': 0.82}
+            }
+            
+        historical_df = pd.read_csv(historical_path)
         historical_df['Medium'] = historical_df['Station'].apply(detect_medium)
         
         metrics_data = {}
