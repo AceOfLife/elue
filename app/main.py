@@ -748,11 +748,11 @@ def load_stations_from_model():
                 print(f"Total features: {len(feature_names)}")
                 print(f"First 20 features: {feature_names[:20]}")  # Show more features for debugging
                 
-                # Extract station names from feature names - FIXED: use 'cat__' prefix
+                # Extract station names from feature names - FIXED: Look for actual station features
                 stations = []
                 for feature in feature_names:
-                    # Look for features with 'cat__' prefix (your actual prefix)
-                    if 'cat__' in feature:
+                    # Look for actual station features (not category features)
+                    if 'cat__' in feature and 'Category_' not in feature:
                         # Remove the 'cat__' prefix to get the station name
                         station_name = feature.replace('cat__', '')
                         stations.append(station_name)
@@ -762,18 +762,39 @@ def load_stations_from_model():
                     print(f"Sample stations: {stations[:10]}")  # Show first 10 stations
                     return sorted(stations)
                 else:
-                    print("No station features found with 'cat__' prefix")
+                    print("No station features found - checking for alternative patterns")
+                    
+                    # Alternative: Look for any features that might be stations
+                    # Exclude the Category features we know are product categories
+                    category_keywords = ['Category_', 'Month_', 'Daypart_']  # Add other non-station prefixes
+                    potential_stations = []
+                    for feature in feature_names:
+                        if 'cat__' in feature and not any(keyword in feature for keyword in category_keywords):
+                            station_name = feature.replace('cat__', '')
+                            potential_stations.append(station_name)
+                    
+                    if potential_stations:
+                        print(f"Found {len(potential_stations)} potential stations")
+                        print(f"Sample: {potential_stations[:10]}")
+                        return sorted(potential_stations)
+                    else:
+                        print("No station features found in model, using fallback")
         
         # Alternative: Check if model has feature_names_in_ attribute
         if hasattr(stage1_pipeline, 'feature_names_in_'):
             feature_names = stage1_pipeline.feature_names_in_
             print(f"Features from feature_names_in_: {len(feature_names)}")
             print(f"First 20 features: {feature_names[:20]}")
+            # Look for station columns in the original feature names
             stations = []
             for feature in feature_names:
-                if 'cat__' in feature:
-                    station_name = feature.replace('cat__', '')
-                    stations.append(station_name)
+                if feature == 'Station':  # If Station is a column name
+                    # This means Station is a categorical variable in the original data
+                    # We need to see what values it can take
+                    print("Found 'Station' column in original features")
+                elif feature not in ['Category', 'Month_name', 'Daypart', 'log_Spend', 'Spend']:
+                    stations.append(feature)
+            
             if stations:
                 print(f"Extracted {len(stations)} stations from feature_names_in_")
                 return sorted(stations)
@@ -821,11 +842,24 @@ def debug_model_features():
                 try:
                     features = step.get_feature_names_out()
                     print(f"Step '{step_name}' has {len(features)} features")
-                    # Show categorical features specifically
+                    
+                    # Show all feature patterns to understand what we have
+                    print("Feature patterns found:")
+                    pattern_counts = {}
+                    for feature in features:
+                        if 'cat__' in feature:
+                            prefix = feature.split('_')[0] + '_' + feature.split('_')[1] if '_' in feature else feature
+                            pattern_counts[prefix] = pattern_counts.get(prefix, 0) + 1
+                    
+                    for pattern, count in pattern_counts.items():
+                        print(f"  - {pattern}: {count} features")
+                        
+                    # Show first 30 features of each type for detailed inspection
                     cat_features = [f for f in features if 'cat__' in f]
-                    print(f"Found {len(cat_features)} categorical features with 'cat__' prefix")
-                    for feature in cat_features[:20]:  # First 20 categorical features
+                    print(f"\nFirst 30 categorical features:")
+                    for feature in cat_features[:30]:
                         print(f"  - {feature}")
+                        
                 except Exception as e:
                     print(f"Error in step '{step_name}': {e}")
 
