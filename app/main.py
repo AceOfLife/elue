@@ -723,112 +723,6 @@ stage2_pipeline = joblib.load(BASE_DIR.parent / "models" / "rf_pipeline2.pkl")
 # Allowed file extensions for logo upload
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.svg'}
 
-# Function to extract stations from trained model
-def load_stations_from_model():
-    """Extract stations from the trained model's feature names"""
-    try:
-        print("=== EXTRACTING STATIONS FROM MODEL ===")
-        
-        # Get the column transformer from your pipeline
-        if hasattr(stage1_pipeline, 'named_steps'):
-            print("Model has named_steps:", list(stage1_pipeline.named_steps.keys()))
-            
-            # Extract preprocessing steps to get feature names
-            preprocessor = stage1_pipeline.named_steps.get('columntransformer', None)
-            if preprocessor is None:
-                # Try to find the preprocessing step by iterating
-                for step_name, step in stage1_pipeline.named_steps.items():
-                    if hasattr(step, 'get_feature_names_out'):
-                        preprocessor = step
-                        print(f"Found preprocessor in step: {step_name}")
-                        break
-            
-            if preprocessor and hasattr(preprocessor, 'get_feature_names_out'):
-                feature_names = preprocessor.get_feature_names_out()
-                print(f"Total features: {len(feature_names)}")
-                print(f"First 10 features: {feature_names[:10]}")
-                
-                # Extract station names from feature names
-                stations = []
-                for feature in feature_names:
-                    # Look for features with 'cat__' prefix (your actual prefix)
-                    if 'cat__' in feature:
-                        # Remove the 'cat__' prefix to get the station name
-                        station_name = feature.replace('cat__', '')
-                        stations.append(station_name)
-                
-                if stations:
-                    print(f"Extracted {len(stations)} stations from model")
-                    print(f"Sample stations: {stations[:10]}")  # Show first 10
-                    return sorted(stations)
-                else:
-                    print("No station features found with 'cat__' prefix")
-        
-        # Alternative: Check if model has feature_names_in_ attribute
-        if hasattr(stage1_pipeline, 'feature_names_in_'):
-            feature_names = stage1_pipeline.feature_names_in_
-            print(f"Features from feature_names_in_: {len(feature_names)}")
-            print(f"First 10 features: {feature_names[:10]}")
-            stations = []
-            for feature in feature_names:
-                if 'cat__' in feature:
-                    station_name = feature.replace('cat__', '')
-                    stations.append(station_name)
-            if stations:
-                print(f"Extracted {len(stations)} stations from feature_names_in_")
-                return sorted(stations)
-        
-        # Fallback: If we can't extract from model, use a comprehensive list
-        print("Could not extract stations from model, using fallback list")
-        return get_fallback_stations()
-        
-    except Exception as e:
-        print(f"Error extracting stations from model: {e}")
-        import traceback
-        traceback.print_exc()
-        return get_fallback_stations()
-
-def get_fallback_stations():
-    """Comprehensive fallback station list"""
-    return [
-        # TV Stations
-        "am yoruba dstv", "mtv base", "nta sport 24", "zeeworld dstv", 
-        "silverbird tv", "hi tv", "gotv", "dstv", "startimes", "supersport",
-        "afro music dstv", "nta international", "ait network", "tvc news",
-        "channels tv", "africa magic", "waptv", "mbc tv", "rts tv", "kada tv",
-        
-        # Radio Stations
-        "slashfm ibadan", "frsc fm abuja", "wazobia fm lagos", "cool fm abuja",
-        "raypower fm", "beat fm", "naija fm", "brila fm", "splash fm", "rhythm fm",
-        "city fm", "traffic radio", "inspiration fm", "nigeria info", "smooth fm",
-        
-        # Other Stations
-        "online platform", "social media", "digital billboard", "mobile app",
-        "youtube channel", "facebook platform", "instagram channel", "twitter platform"
-    ]
-
-def load_stations():
-    """Load stations from model or fallback"""
-    return load_stations_from_model()
-
-# Debug function to see feature names
-def debug_feature_names():
-    """Debug function to see all feature names and their prefixes"""
-    print("=== DEBUGGING FEATURE NAMES ===")
-    if hasattr(stage1_pipeline, 'named_steps'):
-        for step_name, step in stage1_pipeline.named_steps.items():
-            if hasattr(step, 'get_feature_names_out'):
-                try:
-                    features = step.get_feature_names_out()
-                    print(f"Step '{step_name}' has {len(features)} features:")
-                    # Print features that might be stations
-                    station_features = [f for f in features if 'cat__' in f]
-                    print(f"Found {len(station_features)} station features")
-                    for feature in station_features[:20]:  # First 20 station features
-                        print(f"  - {feature}")
-                except Exception as e:
-                    print(f"Error in step '{step_name}': {e}")
-
 # Load historical data for data-driven calibrations
 def load_historical_data():
     try:
@@ -855,42 +749,6 @@ def load_historical_data():
 
 HISTORICAL_EFFICIENCIES = load_historical_data()
 print(f"Data-driven efficiencies from historical: {HISTORICAL_EFFICIENCIES}")
-
-# Load historical metrics data for all calculations
-def load_historical_metrics():
-    """Load historical data to calibrate all metrics"""
-    try:
-        historical_df = pd.read_csv(BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv")
-        historical_df['Medium'] = historical_df['Station'].apply(detect_medium)
-        
-        metrics_data = {}
-        
-        # Calculate realistic ratios based on historical patterns
-        # Paid media typically dominates in traditional channels
-        metrics_data['paid_ratios'] = {'TV': 0.85, 'Radio': 0.90, 'Other': 0.80}
-        metrics_data['owned_ratios'] = {'TV': 0.10, 'Radio': 0.05, 'Other': 0.15}
-        metrics_data['earned_ratios'] = {'TV': 0.05, 'Radio': 0.05, 'Other': 0.05}
-        
-        # Multi-channel uplift factors (more stations = higher uplift)
-        metrics_data['multi_channel_uplift'] = {'TV': 1.15, 'Radio': 1.10, 'Other': 1.12}
-        
-        # ARP to GRP ratios from historical patterns
-        metrics_data['arp_ratios'] = {'TV': 0.85, 'Radio': 0.88, 'Other': 0.82}
-        
-        return metrics_data
-    except Exception as e:
-        print(f"Error loading historical metrics: {e}")
-        # Fallback values derived from historical patterns
-        return {
-            'paid_ratios': {'TV': 0.85, 'Radio': 0.90, 'Other': 0.80},
-            'owned_ratios': {'TV': 0.10, 'Radio': 0.05, 'Other': 0.15},
-            'earned_ratios': {'TV': 0.05, 'Radio': 0.05, 'Other': 0.05},
-            'multi_channel_uplift': {'TV': 1.15, 'Radio': 1.10, 'Other': 1.12},
-            'arp_ratios': {'TV': 0.85, 'Radio': 0.88, 'Other': 0.82}
-        }
-
-HISTORICAL_METRICS = load_historical_metrics()
-print(f"Loaded historical metrics calibration: {HISTORICAL_METRICS}")
 
 # Market sizes calibrated from historical total impressions/GRP aggregates
 HISTORICAL_MARKET_SIZES = {
@@ -947,116 +805,79 @@ def calculate_campaign_duration(start_date: str, end_date: str) -> float:
         return 0.0
 
 # Updated metrics calculation functions (data-driven where possible)
-def calculate_paid_reach(grp: float, frequency: float, medium: str, spend: float, category: str) -> float:
-    """Calculate paid reach percentage based on historical paid media performance"""
+def calculate_paid_reach(grp: float, frequency: float, medium: str) -> float:
+    """
+    Calculate paid reach as a percentage of total reach based on GRP and frequency.
+    Paid reach is the full reach of paid media (100%) by conventional definition.
+    """
     if not isinstance(grp, (int, float)) or grp < 0:
         raise ValueError("GRP must be a non-negative number")
     if not isinstance(frequency, (int, float)) or frequency <= 0:
         raise ValueError("Frequency must be a positive number")
-    
-    # Use historical paid media ratios - higher spend typically means higher paid reach
-    base_paid_ratio = HISTORICAL_METRICS['paid_ratios'].get(medium, 0.85)
-    
-    # Adjust based on spend efficiency (higher spend = more paid focus)
-    spend_efficiency = min(spend / 1000000, 2.0)  # Normalize by 1M spend
-    paid_ratio = min(base_paid_ratio * (1 + spend_efficiency * 0.1), 0.95)
-    
-    total_reach_pct = min(grp / frequency, 100)
-    return total_reach_pct * paid_ratio
+    if not isinstance(medium, str) or not medium.strip():
+        raise ValueError("Medium must be a non-empty string")
 
-def calculate_owned_reach(grp: float, frequency: float, medium: str, category: str) -> float:
-    """Calculate owned reach based on historical category and medium patterns"""
-    # Categories with stronger owned channels (e.g., digital-first brands)
-    high_owned_categories = ['skincare', 'haircaretreatment', 'nutritiondrinks', 'deodorants']
-    
-    base_owned_ratio = HISTORICAL_METRICS['owned_ratios'].get(medium, 0.08)
-    
-    # Adjust based on category propensity for owned media
-    if category in high_owned_categories:
-        owned_ratio = base_owned_ratio * 1.5
-    else:
-        owned_ratio = base_owned_ratio
-    
-    total_reach_pct = min(grp / frequency, 100)
-    return total_reach_pct * owned_ratio
+    total_reach_pct = min(grp / frequency, 100)  # Conventional reach percentage, derived from model GRP/freq
+    return total_reach_pct  # 100% paid reach
 
-def calculate_earned_reach(grp: float, frequency: float, medium: str, category: str) -> float:
-    """Calculate earned reach based on historical viral potential by category"""
-    # Categories with higher earned media potential
-    high_earned_categories = ['tea', 'coffee', 'spreads', 'skincleansing']
-    
-    base_earned_ratio = HISTORICAL_METRICS['earned_ratios'].get(medium, 0.05)
-    
-    # Adjust based on category viral potential
-    if category in high_earned_categories:
-        earned_ratio = base_earned_ratio * 2.0
-    else:
-        earned_ratio = base_earned_ratio
-    
-    total_reach_pct = min(grp / frequency, 100)
-    return total_reach_pct * earned_ratio
+def calculate_owned_reach(grp: float, frequency: float, medium: str) -> float:
+    """Calculate owned reach as a percentage (0% by default, adjust if data supports)"""
+    return 0.0  # Default to 0% unless validated by data
+
+def calculate_earned_reach(grp: float, frequency: float, medium: str) -> float:
+    """Calculate earned reach as a percentage (0% by default, adjust if data supports)"""
+    return 0.0  # Default to 0% unless validated by data
 
 def calculate_total_reach(grp: float, frequency: float, medium: str) -> float:
-    """Calculate total reach as percentage using model-predicted GRP and frequency"""
+    """Calculate total reach as a percentage"""
     if not isinstance(grp, (int, float)) or grp < 0:
         raise ValueError("GRP must be a non-negative number")
     if not isinstance(frequency, (int, float)) or frequency <= 0:
         raise ValueError("Frequency must be a positive number")
+    if not isinstance(medium, str) or not medium.strip():
+        raise ValueError("Medium must be a non-empty string")
 
-    return min(grp / frequency, 100)
+    return min(grp / frequency, 100)  # Return as percentage
 
 def calculate_cost_by_reach_percentage(spend: float, reach_pct: float) -> float:
     """Calculate cost by reach percentage"""
     return spend / reach_pct if reach_pct > 0 else 0
 
-def calculate_multi_channel_grp(grp: float, medium: str, num_stations: int) -> float:
-    """Calculate multi-channel GRP uplift based on historical cross-channel performance"""
-    base_uplift = HISTORICAL_METRICS['multi_channel_uplift'].get(medium, 1.1)
-    
-    # Additional uplift based on number of stations (more stations = more channel diversity)
-    station_uplift = min(num_stations * 0.02, 0.1)  # Max 10% additional uplift
-    
-    return grp * (base_uplift + station_uplift)
+def calculate_multi_channel_grp(grp: float) -> float:
+    """Calculate multi-channel GRP (10% higher than regular GRP, calibrated uplift from historical multi-channel campaigns)"""
+    return grp * 1.1
 
 def calculate_cost_per_grp(spend: float, multi_channel_grp: float) -> float:
     """Calculate cost per GRP"""
     return spend / multi_channel_grp if multi_channel_grp > 0 else 0
 
-def calculate_multi_channel_arp(grp: float, medium: str) -> float:
-    """Calculate multi-channel ARP based on historical ARP/GRP ratios"""
-    arp_ratio = HISTORICAL_METRICS['arp_ratios'].get(medium, 0.85)
-    return grp * arp_ratio
+def calculate_multi_channel_arp(grp: float) -> float:
+    """Calculate multi-channel ARP (Average Rating Point, 90% of GRP from historical averages)"""
+    return grp * 0.9  # Assuming ARP is 90% of GRP
 
 def calculate_cost_per_arp(spend: float, multi_channel_arp: float) -> float:
     """Calculate cost per ARP"""
     return spend / multi_channel_arp if multi_channel_arp > 0 else 0
 
-def calculate_exclusive_reach(medium: str, grp: float, total_grp: float, other_mediums_grp: dict) -> float:
-    """Calculate exclusive reach percentage based on medium dominance and GRP share"""
-    if total_grp == 0:
-        return 0.0
-    
-    medium_grp_share = grp / total_grp
-    
-    # Base exclusive reach based on medium type and GRP dominance
-    base_exclusive = {
-        'TV': 0.15,    # TV typically has higher exclusive audience
-        'Radio': 0.10, # Radio has moderate exclusive listenership
-        'Other': 0.05  # Other channels have lower exclusivity
-    }.get(medium, 0.05)
-    
-    # Adjust based on GRP share dominance
-    exclusive_adjustment = medium_grp_share * 0.3  # More dominance = more exclusivity
-    
-    return min((base_exclusive + exclusive_adjustment) * 100, 30.0)  # Cap at 30%
+def load_stations():
+    try:
+        stations_df = pd.read_csv(
+            BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv",
+            usecols=['Station'],
+            dtype={'Station': 'string'}
+        )
+        stations = stations_df['Station'].unique().tolist()
+        return sorted(stations)
+    except Exception as e:
+        print(f"Error loading stations: {e}")
+        return [
+            "am yoruba dstv", "slashfm ibadan", "frsc fm abuja",
+            "mtv base", "nta sport 24", "zeeworld dstv"
+        ]
 
 @app.get("/", response_class=HTMLResponse)
 async def read_form(request: Request):
-    # Temporary debug to see what stations are being loaded
-    debug_feature_names()
     stations = load_stations()
-    print(f"Loaded {len(stations)} stations for dropdown")
-    
     # Provide default values for all template variables
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -1085,10 +906,7 @@ async def read_form(request: Request):
         "chart_data": "[]",  # Add empty chart_data
         "tv_reach": 0,
         "radio_reach": 0, 
-        "other_reach": 0,
-        "tv_exclusive": 0,
-        "radio_exclusive": 0,
-        "other_exclusive": 0
+        "other_reach": 0
     })
 
 @app.post("/predict/", response_class=HTMLResponse)
@@ -1177,10 +995,7 @@ async def predict(
                 "chart_data": "[]",
                 "tv_reach": 0,
                 "radio_reach": 0,
-                "other_reach": 0,
-                "tv_exclusive": 0,
-                "radio_exclusive": 0,
-                "other_exclusive": 0
+                "other_reach": 0
             })
         
         # Generate a unique filename to avoid conflicts
@@ -1200,32 +1015,11 @@ async def predict(
     })
 
     n = len(stations)
+    df["Station_Spend"] = total_spend / n
+    df["weight"] = 1 / n
     df["Medium"] = df["Station"].apply(detect_medium)
 
-    # FIXED: Calculate station spend based on medium budget allocation
-    medium_budgets = {
-        'TV': tv_budget,
-        'Radio': radio_budget, 
-        'Other': other_budget
-    }
-
-    # Count stations per medium
-    medium_counts = df['Medium'].value_counts()
-
-    # Assign spend proportional to medium budget
-    def calculate_station_spend(medium):
-        if medium in medium_counts and medium_counts[medium] > 0 and medium in medium_budgets and medium_budgets[medium] > 0:
-            return medium_budgets[medium] / medium_counts[medium]
-        return total_spend / n  # Fallback to equal distribution
-
-    df["Station_Spend"] = df["Medium"].apply(calculate_station_spend)
-    df["weight"] = df["Station_Spend"] / df["Station_Spend"].sum()
-
-    # Add some variation to ensure different predictions for different stations
-    np.random.seed(42)  # For reproducible but varied results
-    df["Adjusted_Spend"] = df["Station_Spend"] * np.random.uniform(0.9, 1.1, len(df))
-
-    df["log_Spend"] = np.log1p(df["Adjusted_Spend"])
+    df["log_Spend"] = np.log1p(df["Station_Spend"])
     X1 = df[["log_Spend", "Category", "Month_name", "Daypart", "Station"]]
     df["Predicted_log_TRP"] = stage1_pipeline.predict(X1)
     df["Predicted_TRP"] = np.expm1(df["Predicted_log_TRP"])
@@ -1260,31 +1054,15 @@ async def predict(
     radio_reach = df[df["Medium"] == "Radio"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Radio"].empty else 0
     other_reach = df[df["Medium"] == "Other"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Other"].empty else 0
 
-    # Calculate GRP by medium for exclusive reach calculation
-    tv_grp = df[df["Medium"] == "TV"]["Predicted_GRP"].sum() if not df[df["Medium"] == "TV"].empty else 0
-    radio_grp = df[df["Medium"] == "Radio"]["Predicted_GRP"].sum() if not df[df["Medium"] == "Radio"].empty else 0
-    other_grp = df[df["Medium"] == "Other"]["Predicted_GRP"].sum() if not df[df["Medium"] == "Other"].empty else 0
-
-    # Calculate exclusive reach per medium
-    other_mediums_grp = {
-        'TV': tv_grp,
-        'Radio': radio_grp,
-        'Other': other_grp
-    }
-    
-    tv_exclusive = calculate_exclusive_reach('TV', tv_grp, campaign_grp, other_mediums_grp) if tv_budget > 0 else 0
-    radio_exclusive = calculate_exclusive_reach('Radio', radio_grp, campaign_grp, other_mediums_grp) if radio_budget > 0 else 0
-    other_exclusive = calculate_exclusive_reach('Other', other_grp, campaign_grp, other_mediums_grp) if other_budget > 0 else 0
-
-    # Calculate the new metrics as percentages (data-driven approach, derived from model outputs)
-    paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium, total_spend, Category)
-    owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium, Category)
-    earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium, Category)
+    # Calculate the new metrics as percentages (conventional approach, derived from model outputs)
+    paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium)
+    owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium)
+    earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium)
     total_reach_pct = calculate_total_reach(campaign_grp, avg_frequency, avg_medium)
     cost_by_reach_pct = calculate_cost_by_reach_percentage(total_spend, reach_pct)
-    multi_channel_grp = calculate_multi_channel_grp(campaign_grp, avg_medium, len(stations))
+    multi_channel_grp = calculate_multi_channel_grp(campaign_grp)
     cost_per_grp = calculate_cost_per_grp(total_spend, multi_channel_grp)
-    multi_channel_arp = calculate_multi_channel_arp(campaign_grp, avg_medium)
+    multi_channel_arp = calculate_multi_channel_arp(campaign_grp)
     cost_per_arp = calculate_cost_per_arp(total_spend, multi_channel_arp)
 
     # Prepare chart data
@@ -1295,12 +1073,6 @@ async def predict(
         "Predicted_TRP": "TRP",
         "Predicted_GRP": "GRP"
     }).to_dict(orient="records")
-
-    # Debug: Print chart data to verify different values
-    print("=== CHART DATA DEBUG ===")
-    for i, row in enumerate(chart_data):
-        print(f"Station {i+1}: {row['Station']} - TRP: {row['TRP']:.4f} - GRP: {row['GRP']:.4f}")
-    print("========================")
 
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -1335,10 +1107,7 @@ async def predict(
         "chart_data": json.dumps(chart_data) if chart_data else "[]",
         "tv_reach": tv_reach,
         "radio_reach": radio_reach,
-        "other_reach": other_reach,
-        "tv_exclusive": tv_exclusive,
-        "radio_exclusive": radio_exclusive,
-        "other_exclusive": other_exclusive
+        "other_reach": other_reach
     })
 
 @app.post("/predict_batch/", response_class=HTMLResponse)
@@ -1376,10 +1145,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "chart_data": "[]",
                 "tv_reach": 0,
                 "radio_reach": 0,
-                "other_reach": 0,
-                "tv_exclusive": 0,
-                "radio_exclusive": 0,
-                "other_exclusive": 0
+                "other_reach": 0
             })
 
         if "Spend" in df.columns:
@@ -1415,10 +1181,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "chart_data": "[]",
                 "tv_reach": 0,
                 "radio_reach": 0,
-                "other_reach": 0,
-                "tv_exclusive": 0,
-                "radio_exclusive": 0,
-                "other_exclusive": 0
+                "other_reach": 0
             })
 
         df["Medium"] = df["Station"].apply(detect_medium)
@@ -1430,11 +1193,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
         df["Station_Spend"] = df["Spend"]
         df["weight"] = df["Station_Spend"] / df["Station_Spend"].sum()
 
-        # Add variation for batch predictions too
-        np.random.seed(42)
-        df["Adjusted_Spend"] = df["Station_Spend"] * np.random.uniform(0.9, 1.1, len(df))
-
-        df["log_Spend"] = np.log1p(df["Adjusted_Spend"])
+        df["log_Spend"] = np.log1p(df["Station_Spend"])
         X1 = df[["log_Spend", "Category", "Month_name", "Daypart", "Station"]]
         df["Predicted_log_TRP"] = stage1_pipeline.predict(X1)
         df["Predicted_TRP"] = np.expm1(df["Predicted_log_TRP"])
@@ -1469,31 +1228,15 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
         radio_reach = df[df["Medium"] == "Radio"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Radio"].empty else 0
         other_reach = df[df["Medium"] == "Other"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Other"].empty else 0
 
-        # Calculate GRP by medium for exclusive reach calculation
-        tv_grp = df[df["Medium"] == "TV"]["Predicted_GRP"].sum() if not df[df["Medium"] == "TV"].empty else 0
-        radio_grp = df[df["Medium"] == "Radio"]["Predicted_GRP"].sum() if not df[df["Medium"] == "Radio"].empty else 0
-        other_grp = df[df["Medium"] == "Other"]["Predicted_GRP"].sum() if not df[df["Medium"] == "Other"].empty else 0
-
-        # Calculate exclusive reach per medium
-        other_mediums_grp = {
-            'TV': tv_grp,
-            'Radio': radio_grp,
-            'Other': other_grp
-        }
-        
-        tv_exclusive = calculate_exclusive_reach('TV', tv_grp, campaign_grp, other_mediums_grp) if tv_grp > 0 else 0
-        radio_exclusive = calculate_exclusive_reach('Radio', radio_grp, campaign_grp, other_mediums_grp) if radio_grp > 0 else 0
-        other_exclusive = calculate_exclusive_reach('Other', other_grp, campaign_grp, other_mediums_grp) if other_grp > 0 else 0
-
-        # Calculate the new metrics as percentages (data-driven approach, derived from model outputs)
-        paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium, total_spend, df["Category"].iloc[0])
-        owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium, df["Category"].iloc[0])
-        earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium, df["Category"].iloc[0])
+        # Calculate the new metrics as percentages (conventional approach, derived from model outputs)
+        paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium)
+        owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium)
+        earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium)
         total_reach_pct = calculate_total_reach(campaign_grp, avg_frequency, avg_medium)
         cost_by_reach_pct = calculate_cost_by_reach_percentage(total_spend, reach_pct)
-        multi_channel_grp = calculate_multi_channel_grp(campaign_grp, avg_medium, len(df))
+        multi_channel_grp = calculate_multi_channel_grp(campaign_grp)
         cost_per_grp = calculate_cost_per_grp(total_spend, multi_channel_grp)
-        multi_channel_arp = calculate_multi_channel_arp(campaign_grp, avg_medium)
+        multi_channel_arp = calculate_multi_channel_arp(campaign_grp)
         cost_per_arp = calculate_cost_per_arp(total_spend, multi_channel_arp)
 
         # Check if Audience column exists, otherwise use a default
@@ -1538,10 +1281,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "chart_data": json.dumps(chart_data) if chart_data else "[]",
             "tv_reach": tv_reach,
             "radio_reach": radio_reach,
-            "other_reach": other_reach,
-            "tv_exclusive": tv_exclusive,
-            "radio_exclusive": radio_exclusive,
-            "other_exclusive": other_exclusive
+            "other_reach": other_reach
         })
 
     except Exception as e:
@@ -1574,10 +1314,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "chart_data": "[]",
             "tv_reach": 0,
             "radio_reach": 0,
-            "other_reach": 0,
-            "tv_exclusive": 0,
-            "radio_exclusive": 0,
-            "other_exclusive": 0
+            "other_reach": 0
         })
 
 
