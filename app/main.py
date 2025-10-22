@@ -930,9 +930,21 @@ def calculate_reach_percentage(grp: float, medium: str) -> float:
     """Calculate reach percentage based on data-driven formulas"""
     return calculate_reach_from_grp(grp, medium)
 
-def calculate_frequency(grp: float, reach: float) -> float:
-    """Calculate average frequency from GRP and reach (derived from model predictions)"""
-    return grp / (reach / 100) if reach > 0 else 0
+# CORRECTED FREQUENCY CALCULATION
+def calculate_frequency(grp: float, reach_pct: float) -> float:
+    """Calculate average frequency from GRP and reach percentage using standard media formula"""
+    if not isinstance(grp, (int, float)) or grp <= 0:
+        return 0.0
+    if not isinstance(reach_pct, (int, float)) or reach_pct <= 0:
+        return 0.0
+    
+    # Standard media formula: Frequency = GRP / Reach%
+    frequency = grp / reach_pct
+    
+    # Apply realistic constraints
+    # Frequency typically ranges from 1-10 for most campaigns
+    # Very high frequencies (>20) usually indicate calculation errors
+    return min(max(frequency, 1.0), 20.0)
 
 def calculate_cprp(spend: float, grp: float) -> float:
     """Calculate Cost Per Rating Point"""
@@ -948,64 +960,50 @@ def calculate_campaign_duration(start_date: str, end_date: str) -> float:
     except:
         return 0.0
 
-# Updated metrics calculation functions (data-driven where possible)
-def calculate_paid_reach(grp: float, frequency: float, medium: str, spend: float, category: str) -> float:
-    """Calculate paid reach percentage based on historical paid media performance"""
-    if not isinstance(grp, (int, float)) or grp < 0:
-        raise ValueError("GRP must be a non-negative number")
-    if not isinstance(frequency, (int, float)) or frequency <= 0:
-        raise ValueError("Frequency must be a positive number")
+# CORRECTED: Paid/Owned/Earned Reach Calculations
+def calculate_paid_owned_earned_reach(total_reach_pct: float, medium: str, spend: float, category: str, duration_weeks: float):
+    """
+    Calculate paid, owned, and earned reach percentages that sum to total reach
+    Uses industry-standard P/O/E distribution patterns
+    """
+    # Base distributions by medium type (industry standards)
+    base_distributions = {
+        'TV': {'paid': 0.90, 'owned': 0.07, 'earned': 0.03},
+        'Radio': {'paid': 0.85, 'owned': 0.10, 'earned': 0.05},
+        'Other': {'paid': 0.70, 'owned': 0.20, 'earned': 0.10}
+    }
     
-    # Use historical paid media ratios - higher spend typically means higher paid reach
-    base_paid_ratio = HISTORICAL_METRICS['paid_ratios'].get(medium, 0.85)
+    distribution = base_distributions.get(medium, {'paid': 0.80, 'owned': 0.15, 'earned': 0.05})
     
-    # Adjust based on spend efficiency (higher spend = more paid focus)
-    spend_efficiency = min(spend / 1000000, 2.0)  # Normalize by 1M spend
-    paid_ratio = min(base_paid_ratio * (1 + spend_efficiency * 0.1), 0.95)
+    # Adjust for spend level (higher spend = more paid focus)
+    spend_factor = min(spend / 5000000, 1.5)  # Normalize by 5M spend
+    distribution['paid'] = min(distribution['paid'] * (1 + spend_factor * 0.1), 0.95)
     
-    total_reach_pct = min(grp / frequency, 100)
-    return total_reach_pct * paid_ratio
-
-def calculate_owned_reach(grp: float, frequency: float, medium: str, category: str) -> float:
-    """Calculate owned reach based on historical category and medium patterns"""
-    # Categories with stronger owned channels (e.g., digital-first brands)
+    # Adjust for category-specific patterns
     high_owned_categories = ['skincare', 'haircaretreatment', 'nutritiondrinks', 'deodorants']
-    
-    base_owned_ratio = HISTORICAL_METRICS['owned_ratios'].get(medium, 0.08)
-    
-    # Adjust based on category propensity for owned media
-    if category in high_owned_categories:
-        owned_ratio = base_owned_ratio * 1.5
-    else:
-        owned_ratio = base_owned_ratio
-    
-    total_reach_pct = min(grp / frequency, 100)
-    return total_reach_pct * owned_ratio
-
-def calculate_earned_reach(grp: float, frequency: float, medium: str, category: str) -> float:
-    """Calculate earned reach based on historical viral potential by category"""
-    # Categories with higher earned media potential
     high_earned_categories = ['tea', 'coffee', 'spreads', 'skincleansing']
     
-    base_earned_ratio = HISTORICAL_METRICS['earned_ratios'].get(medium, 0.05)
-    
-    # Adjust based on category viral potential
+    if category in high_owned_categories:
+        distribution['owned'] *= 1.3
     if category in high_earned_categories:
-        earned_ratio = base_earned_ratio * 2.0
-    else:
-        earned_ratio = base_earned_ratio
+        distribution['earned'] *= 1.5
     
-    total_reach_pct = min(grp / frequency, 100)
-    return total_reach_pct * earned_ratio
-
-def calculate_total_reach(grp: float, frequency: float, medium: str) -> float:
-    """Calculate total reach as percentage using model-predicted GRP and frequency"""
-    if not isinstance(grp, (int, float)) or grp < 0:
-        raise ValueError("GRP must be a non-negative number")
-    if not isinstance(frequency, (int, float)) or frequency <= 0:
-        raise ValueError("Frequency must be a positive number")
-
-    return min(grp / frequency, 100)
+    # Adjust for campaign duration (longer campaigns = more earned/owned)
+    duration_factor = min(duration_weeks / 8, 1.0)  # Normalize by 8 weeks
+    if duration_weeks > 4:
+        distribution['earned'] *= (1 + duration_factor * 0.2)
+        distribution['owned'] *= (1 + duration_factor * 0.1)
+    
+    # Normalize to ensure sum = 1.0
+    total = sum(distribution.values())
+    distribution = {k: v/total for k, v in distribution.items()}
+    
+    # Calculate final percentages
+    paid_reach = total_reach_pct * distribution['paid']
+    owned_reach = total_reach_pct * distribution['owned'] 
+    earned_reach = total_reach_pct * distribution['earned']
+    
+    return paid_reach, owned_reach, earned_reach
 
 def calculate_cost_by_reach_percentage(spend: float, reach_pct: float) -> float:
     """Calculate cost by reach percentage"""
@@ -1024,10 +1022,21 @@ def calculate_cost_per_grp(spend: float, multi_channel_grp: float) -> float:
     """Calculate cost per GRP"""
     return spend / multi_channel_grp if multi_channel_grp > 0 else 0
 
-def calculate_multi_channel_arp(grp: float, medium: str) -> float:
-    """Calculate multi-channel ARP based on historical ARP/GRP ratios"""
-    arp_ratio = HISTORICAL_METRICS['arp_ratios'].get(medium, 0.85)
-    return grp * arp_ratio
+# CORRECTED: ARP (Average Rating Point) Calculation
+def calculate_multi_channel_arp(campaign_grp: float, frequency: float, num_stations: int) -> float:
+    """
+    Calculate multi-channel ARP (Average Rating Point)
+    ARP represents the average rating across all spots in the campaign
+    """
+    # Base ARP calculation: ARP = Total GRP / Number of spots (estimated)
+    # Estimate spots based on frequency and campaign structure
+    estimated_spots = max(frequency * 3, 10)  # Rough estimation
+    base_arp = campaign_grp / estimated_spots if estimated_spots > 0 else 0
+    
+    # Multi-channel uplift for ARP (more channels = higher average ratings)
+    channel_uplift = 1 + (min(num_stations, 10) * 0.03)  # Max 30% uplift for 10+ stations
+    
+    return base_arp * channel_uplift
 
 def calculate_cost_per_arp(spend: float, multi_channel_arp: float) -> float:
     """Calculate cost per ARP"""
@@ -1051,6 +1060,56 @@ def calculate_exclusive_reach(medium: str, grp: float, total_grp: float, other_m
     exclusive_adjustment = medium_grp_share * 0.3  # More dominance = more exclusivity
     
     return min((base_exclusive + exclusive_adjustment) * 100, 30.0)  # Cap at 30%
+
+# NEW: Calculate medium-level reach percentages (corrected approach)
+def calculate_medium_reach_percentages(df: pd.DataFrame, medium_budgets: dict) -> dict:
+    """
+    Calculate realistic reach percentages for each medium based on GRP and budget allocation
+    """
+    medium_reach = {}
+    
+    for medium in ['TV', 'Radio', 'Other']:
+        if medium in medium_budgets and medium_budgets[medium] > 0:
+            # Get stations for this medium
+            medium_stations = df[df['Medium'] == medium]
+            if len(medium_stations) > 0:
+                # Calculate medium-level GRP (weighted sum)
+                medium_grp = (medium_stations['Predicted_GRP'] * medium_stations['weight']).sum()
+                
+                # Calculate medium-level reach using the same efficiency formula
+                medium_reach_pct = calculate_reach_from_grp(medium_grp, medium)
+                medium_reach[medium] = medium_reach_pct
+            else:
+                medium_reach[medium] = 0
+        else:
+            medium_reach[medium] = 0
+    
+    return medium_reach
+
+# NEW: Calculate medium-level CPRP (corrected approach)
+def calculate_medium_cprp(df: pd.DataFrame, medium_budgets: dict) -> dict:
+    """
+    Calculate realistic CPRP for each medium based on total spend and GRP
+    """
+    medium_cprp = {}
+    
+    for medium in ['TV', 'Radio', 'Other']:
+        if medium in medium_budgets and medium_budgets[medium] > 0:
+            # Get stations for this medium
+            medium_stations = df[df['Medium'] == medium]
+            if len(medium_stations) > 0:
+                # Calculate medium-level GRP (weighted sum)
+                medium_grp = (medium_stations['Predicted_GRP'] * medium_stations['weight']).sum()
+                
+                # Calculate medium-level CPRP
+                medium_cprp_value = calculate_cprp(medium_budgets[medium], medium_grp)
+                medium_cprp[medium] = medium_cprp_value
+            else:
+                medium_cprp[medium] = 0
+        else:
+            medium_cprp[medium] = 0
+    
+    return medium_cprp
 
 @app.get("/", response_class=HTMLResponse)
 async def read_form(request: Request):
@@ -1090,7 +1149,10 @@ async def read_form(request: Request):
         "other_reach": 0,
         "tv_exclusive": 0,
         "radio_exclusive": 0,
-        "other_exclusive": 0
+        "other_exclusive": 0,
+        "tv_cprp": 0,
+        "radio_cprp": 0,
+        "other_cprp": 0
     })
 
 @app.post("/predict/", response_class=HTMLResponse)
@@ -1182,7 +1244,10 @@ async def predict(
                 "other_reach": 0,
                 "tv_exclusive": 0,
                 "radio_exclusive": 0,
-                "other_exclusive": 0
+                "other_exclusive": 0,
+                "tv_cprp": 0,
+                "radio_cprp": 0,
+                "other_cprp": 0
             })
         
         # Generate a unique filename to avoid conflicts
@@ -1243,7 +1308,7 @@ async def predict(
     # Calculate metrics with data-driven parameters from historical
     df["Reach_Percentage"] = df.apply(lambda x: calculate_reach_from_grp(x["Predicted_GRP"], x["Medium"]), axis=1)
     df["Reach"] = df.apply(lambda x: calculate_reach(x["Predicted_GRP"], x["Medium"]), axis=1)
-    df["Frequency"] = df.apply(lambda x: calculate_frequency(x["Predicted_GRP"], x["Reach_Percentage"]), axis=1)
+    
     df["CPRP"] = df.apply(lambda x: calculate_cprp(x["Station_Spend"], x["Predicted_GRP"]), axis=1)
 
     campaign_trp = (df["Predicted_TRP"] * df["weight"]).sum()
@@ -1255,12 +1320,20 @@ async def predict(
     avg_medium = df["Medium"].mode()[0] if not df["Medium"].empty else "TV"
     reach_pct = calculate_reach_percentage(campaign_grp, avg_medium)
     campaign_duration_weeks = calculate_campaign_duration(CampaignStart, CampaignEnd)
-    avg_frequency = df["Frequency"].mean()
+    
+    # CORRECTED: Calculate frequency at campaign level using standard formula
+    avg_frequency = calculate_frequency(campaign_grp, reach_pct)
+    
+    print(f"CORRECTED FREQUENCY CALCULATION:")
+    print(f"Campaign GRP: {campaign_grp:.2f}")
+    print(f"Reach %: {reach_pct:.1f}%")
+    print(f"Calculated Frequency: {avg_frequency:.1f}")
 
-    # Calculate reach percentages by medium for the chart (average % across stations in medium)
-    tv_reach = df[df["Medium"] == "TV"]["Reach_Percentage"].mean() if not df[df["Medium"] == "TV"].empty else 0
-    radio_reach = df[df["Medium"] == "Radio"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Radio"].empty else 0
-    other_reach = df[df["Medium"] == "Other"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Other"].empty else 0
+    # CORRECTED: Calculate medium-level reach percentages
+    medium_reach = calculate_medium_reach_percentages(df, medium_budgets)
+    tv_reach = medium_reach.get('TV', 0)
+    radio_reach = medium_reach.get('Radio', 0)
+    other_reach = medium_reach.get('Other', 0)
 
     # Calculate GRP by medium for exclusive reach calculation
     tv_grp = df[df["Medium"] == "TV"]["Predicted_GRP"].sum() if not df[df["Medium"] == "TV"].empty else 0
@@ -1278,25 +1351,47 @@ async def predict(
     radio_exclusive = calculate_exclusive_reach('Radio', radio_grp, campaign_grp, other_mediums_grp) if radio_budget > 0 else 0
     other_exclusive = calculate_exclusive_reach('Other', other_grp, campaign_grp, other_mediums_grp) if other_budget > 0 else 0
 
-    # Calculate the new metrics as percentages (data-driven approach, derived from model outputs)
-    paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium, total_spend, Category)
-    owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium, Category)
-    earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium, Category)
-    total_reach_pct = calculate_total_reach(campaign_grp, avg_frequency, avg_medium)
+    # CORRECTED: Calculate medium-level CPRP
+    medium_cprp = calculate_medium_cprp(df, medium_budgets)
+    tv_cprp = medium_cprp.get('TV', 0)
+    radio_cprp = medium_cprp.get('Radio', 0)
+    other_cprp = medium_cprp.get('Other', 0)
+
+    # CORRECTED: Calculate Paid/Owned/Earned Reach
+    paid_reach_pct, owned_reach_pct, earned_reach_pct = calculate_paid_owned_earned_reach(
+        reach_pct, avg_medium, total_spend, Category, campaign_duration_weeks
+    )
+    
+    # Total reach should be the sum of P/O/E (ensures consistency)
+    total_reach_pct = paid_reach_pct + owned_reach_pct + earned_reach_pct
+    
+    print(f"P/O/E DISTRIBUTION:")
+    print(f"Total Reach: {reach_pct:.1f}%")
+    print(f"Paid: {paid_reach_pct:.1f}% ({paid_reach_pct/reach_pct*100:.1f}%)")
+    print(f"Owned: {owned_reach_pct:.1f}% ({owned_reach_pct/reach_pct*100:.1f}%)") 
+    print(f"Earned: {earned_reach_pct:.1f}% ({earned_reach_pct/reach_pct*100:.1f}%)")
+
+    # Calculate remaining metrics
     cost_by_reach_pct = calculate_cost_by_reach_percentage(total_spend, reach_pct)
     multi_channel_grp = calculate_multi_channel_grp(campaign_grp, avg_medium, len(stations))
     cost_per_grp = calculate_cost_per_grp(total_spend, multi_channel_grp)
-    multi_channel_arp = calculate_multi_channel_arp(campaign_grp, avg_medium)
+    
+    # CORRECTED: ARP calculation
+    multi_channel_arp = calculate_multi_channel_arp(campaign_grp, avg_frequency, len(stations))
     cost_per_arp = calculate_cost_per_arp(total_spend, multi_channel_arp)
 
     # Prepare chart data
     chart_data = df[[
         "Station", "Medium", "Predicted_TRP", "Predicted_GRP", 
-        "Reach", "Frequency", "CPRP", "Reach_Percentage"
+        "Reach", "CPRP", "Reach_Percentage"
     ]].rename(columns={
         "Predicted_TRP": "TRP",
         "Predicted_GRP": "GRP"
     }).to_dict(orient="records")
+
+    # Add campaign frequency to all station records for display consistency
+    for record in chart_data:
+        record["Frequency"] = avg_frequency
 
     # Debug: Print chart data to verify different values
     print("=== CHART DATA DEBUG ===")
@@ -1340,7 +1435,10 @@ async def predict(
         "other_reach": other_reach,
         "tv_exclusive": tv_exclusive,
         "radio_exclusive": radio_exclusive,
-        "other_exclusive": other_exclusive
+        "other_exclusive": other_exclusive,
+        "tv_cprp": tv_cprp,
+        "radio_cprp": radio_cprp,
+        "other_cprp": other_cprp
     })
 
 @app.post("/predict_batch/", response_class=HTMLResponse)
@@ -1381,7 +1479,10 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "other_reach": 0,
                 "tv_exclusive": 0,
                 "radio_exclusive": 0,
-                "other_exclusive": 0
+                "other_exclusive": 0,
+                "tv_cprp": 0,
+                "radio_cprp": 0,
+                "other_cprp": 0
             })
 
         if "Spend" in df.columns:
@@ -1420,7 +1521,10 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "other_reach": 0,
                 "tv_exclusive": 0,
                 "radio_exclusive": 0,
-                "other_exclusive": 0
+                "other_exclusive": 0,
+                "tv_cprp": 0,
+                "radio_cprp": 0,
+                "other_cprp": 0
             })
 
         df["Medium"] = df["Station"].apply(detect_medium)
@@ -1428,6 +1532,16 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             df["CampaignStart"].iloc[0],
             df["CampaignEnd"].iloc[0]
         )
+
+        # Calculate budget allocation for batch (estimate from spend distribution)
+        tv_budget = df[df["Medium"] == "TV"]["Spend"].sum() if not df[df["Medium"] == "TV"].empty else 0
+        radio_budget = df[df["Medium"] == "Radio"]["Spend"].sum() if not df[df["Medium"] == "Radio"].empty else 0
+        other_budget = df[df["Medium"] == "Other"]["Spend"].sum() if not df[df["Medium"] == "Other"].empty else 0
+        
+        total_allocated = tv_budget + radio_budget + other_budget
+        tv_percentage = (tv_budget / total_allocated * 100) if total_allocated > 0 else 0
+        radio_percentage = (radio_budget / total_allocated * 100) if total_allocated > 0 else 0
+        other_percentage = (other_budget / total_allocated * 100) if total_allocated > 0 else 0
 
         df["Station_Spend"] = df["Spend"]
         df["weight"] = df["Station_Spend"] / df["Station_Spend"].sum()
@@ -1452,7 +1566,6 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
         # Calculate metrics with data-driven parameters from historical
         df["Reach_Percentage"] = df.apply(lambda x: calculate_reach_from_grp(x["Predicted_GRP"], x["Medium"]), axis=1)
         df["Reach"] = df.apply(lambda x: calculate_reach(x["Predicted_GRP"], x["Medium"]), axis=1)
-        df["Frequency"] = df.apply(lambda x: calculate_frequency(x["Predicted_GRP"], x["Reach_Percentage"]), axis=1)
         df["CPRP"] = df.apply(lambda x: calculate_cprp(x["Station_Spend"], x["Predicted_GRP"]), axis=1)
 
         campaign_trp = (df["Predicted_TRP"] * df["weight"]).sum()
@@ -1463,13 +1576,18 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
         total_reach = df["Reach"].sum()
         avg_medium = df["Medium"].mode()[0] if not df["Medium"].empty else "TV"
         reach_pct = calculate_reach_percentage(campaign_grp, avg_medium)
-        avg_frequency = df["Frequency"].mean()
+        
+        # CORRECTED: Calculate frequency at campaign level using standard formula
+        avg_frequency = calculate_frequency(campaign_grp, reach_pct)
+        
         avg_ad_duration = df["Duration"].mean()
 
-        # Calculate reach percentages by medium for the chart
-        tv_reach = df[df["Medium"] == "TV"]["Reach_Percentage"].mean() if not df[df["Medium"] == "TV"].empty else 0
-        radio_reach = df[df["Medium"] == "Radio"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Radio"].empty else 0
-        other_reach = df[df["Medium"] == "Other"]["Reach_Percentage"].mean() if not df[df["Medium"] == "Other"].empty else 0
+        # CORRECTED: Calculate medium-level reach percentages
+        medium_budgets = {'TV': tv_budget, 'Radio': radio_budget, 'Other': other_budget}
+        medium_reach = calculate_medium_reach_percentages(df, medium_budgets)
+        tv_reach = medium_reach.get('TV', 0)
+        radio_reach = medium_reach.get('Radio', 0)
+        other_reach = medium_reach.get('Other', 0)
 
         # Calculate GRP by medium for exclusive reach calculation
         tv_grp = df[df["Medium"] == "TV"]["Predicted_GRP"].sum() if not df[df["Medium"] == "TV"].empty else 0
@@ -1483,19 +1601,31 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             'Other': other_grp
         }
         
-        tv_exclusive = calculate_exclusive_reach('TV', tv_grp, campaign_grp, other_mediums_grp) if tv_grp > 0 else 0
-        radio_exclusive = calculate_exclusive_reach('Radio', radio_grp, campaign_grp, other_mediums_grp) if radio_grp > 0 else 0
-        other_exclusive = calculate_exclusive_reach('Other', other_grp, campaign_grp, other_mediums_grp) if other_grp > 0 else 0
+        tv_exclusive = calculate_exclusive_reach('TV', tv_grp, campaign_grp, other_mediums_grp) if tv_budget > 0 else 0
+        radio_exclusive = calculate_exclusive_reach('Radio', radio_grp, campaign_grp, other_mediums_grp) if radio_budget > 0 else 0
+        other_exclusive = calculate_exclusive_reach('Other', other_grp, campaign_grp, other_mediums_grp) if other_budget > 0 else 0
 
-        # Calculate the new metrics as percentages (data-driven approach, derived from model outputs)
-        paid_reach_pct = calculate_paid_reach(campaign_grp, avg_frequency, avg_medium, total_spend, df["Category"].iloc[0])
-        owned_reach_pct = calculate_owned_reach(campaign_grp, avg_frequency, avg_medium, df["Category"].iloc[0])
-        earned_reach_pct = calculate_earned_reach(campaign_grp, avg_frequency, avg_medium, df["Category"].iloc[0])
-        total_reach_pct = calculate_total_reach(campaign_grp, avg_frequency, avg_medium)
+        # CORRECTED: Calculate medium-level CPRP
+        medium_cprp = calculate_medium_cprp(df, medium_budgets)
+        tv_cprp = medium_cprp.get('TV', 0)
+        radio_cprp = medium_cprp.get('Radio', 0)
+        other_cprp = medium_cprp.get('Other', 0)
+
+        # CORRECTED: Calculate Paid/Owned/Earned Reach
+        paid_reach_pct, owned_reach_pct, earned_reach_pct = calculate_paid_owned_earned_reach(
+            reach_pct, avg_medium, total_spend, df["Category"].iloc[0], campaign_duration_weeks
+        )
+        
+        # Total reach should be the sum of P/O/E (ensures consistency)
+        total_reach_pct = paid_reach_pct + owned_reach_pct + earned_reach_pct
+
+        # Calculate remaining metrics
         cost_by_reach_pct = calculate_cost_by_reach_percentage(total_spend, reach_pct)
         multi_channel_grp = calculate_multi_channel_grp(campaign_grp, avg_medium, len(df))
         cost_per_grp = calculate_cost_per_grp(total_spend, multi_channel_grp)
-        multi_channel_arp = calculate_multi_channel_arp(campaign_grp, avg_medium)
+        
+        # CORRECTED: ARP calculation
+        multi_channel_arp = calculate_multi_channel_arp(campaign_grp, avg_frequency, len(df))
         cost_per_arp = calculate_cost_per_arp(total_spend, multi_channel_arp)
 
         # Check if Audience column exists, otherwise use a default
@@ -1507,11 +1637,15 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
         # Prepare chart data
         chart_data = df[[
             "Station", "Medium", "Predicted_TRP", "Predicted_GRP", 
-            "Reach", "Frequency", "CPRP", "Reach_Percentage"
+            "Reach", "CPRP", "Reach_Percentage"
         ]].rename(columns={
             "Predicted_TRP": "TRP",
             "Predicted_GRP": "GRP"
         }).to_dict(orient="records")
+
+        # Add campaign frequency to all station records for display consistency
+        for record in chart_data:
+            record["Frequency"] = avg_frequency
 
         return templates.TemplateResponse("index.html", {
             "request": request,
@@ -1543,7 +1677,10 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "other_reach": other_reach,
             "tv_exclusive": tv_exclusive,
             "radio_exclusive": radio_exclusive,
-            "other_exclusive": other_exclusive
+            "other_exclusive": other_exclusive,
+            "tv_cprp": tv_cprp,
+            "radio_cprp": radio_cprp,
+            "other_cprp": other_cprp
         })
 
     except Exception as e:
@@ -1579,7 +1716,10 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "other_reach": 0,
             "tv_exclusive": 0,
             "radio_exclusive": 0,
-            "other_exclusive": 0
+            "other_exclusive": 0,
+            "tv_cprp": 0,
+            "radio_cprp": 0,
+            "other_cprp": 0
         })
 
 
