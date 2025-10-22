@@ -725,62 +725,53 @@ ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.svg'}
 
 # Function to extract stations from trained model
 def load_stations_from_model():
-    """Extract stations from the trained model's feature names"""
+    """Extract stations from the trained model's feature names - Fixed version"""
     try:
         print("=== EXTRACTING STATIONS FROM MODEL ===")
         
-        # Get the column transformer from your pipeline
-        if hasattr(stage1_pipeline, 'named_steps'):
-            print("Model has named_steps:", list(stage1_pipeline.named_steps.keys()))
-            
-            # Extract preprocessing steps to get feature names
-            preprocessor = stage1_pipeline.named_steps.get('columntransformer', None)
-            if preprocessor is None:
-                # Try to find the preprocessing step by iterating
-                for step_name, step in stage1_pipeline.named_steps.items():
-                    if hasattr(step, 'get_feature_names_out'):
-                        preprocessor = step
-                        print(f"Found preprocessor in step: {step_name}")
-                        break
-            
-            if preprocessor and hasattr(preprocessor, 'get_feature_names_out'):
-                feature_names = preprocessor.get_feature_names_out()
-                print(f"Total features: {len(feature_names)}")
-                print(f"First 10 features: {feature_names[:10]}")
-                
-                # Extract station names from feature names
-                stations = []
-                for feature in feature_names:
-                    # Look for features with 'cat__' prefix (your actual prefix)
-                    if 'cat__' in feature:
-                        # Remove the 'cat__' prefix to get the station name
-                        station_name = feature.replace('cat__', '')
-                        stations.append(station_name)
-                
-                if stations:
-                    print(f"Extracted {len(stations)} stations from model")
-                    print(f"Sample stations: {stations[:10]}")  # Show first 10
-                    return sorted(stations)
-                else:
-                    print("No station features found with 'cat__' prefix")
+        all_stations = set()
         
-        # Alternative: Check if model has feature_names_in_ attribute
+        # Method 1: Try to get features from preprocessor
+        if hasattr(stage1_pipeline, 'named_steps'):
+            for step_name, step in stage1_pipeline.named_steps.items():
+                if hasattr(step, 'get_feature_names_out'):
+                    try:
+                        features = step.get_feature_names_out()
+                        print(f"Step '{step_name}' has {len(features)} features")
+                        
+                        # Try different patterns for station features
+                        patterns = ['Station_', 'station_', 'cat__Station_', 'cat__station_']
+                        
+                        for pattern in patterns:
+                            station_features = [f for f in features if pattern in f]
+                            if station_features:
+                                print(f"Found {len(station_features)} features with pattern '{pattern}'")
+                                for feature in station_features:
+                                    # Extract station name by removing the prefix
+                                    station_name = feature.split(pattern)[-1]
+                                    all_stations.add(station_name)
+                                break  # Use the first pattern that works
+                        
+                    except Exception as e:
+                        print(f"Error processing step '{step_name}': {e}")
+        
+        # Method 2: Check feature_names_in_
         if hasattr(stage1_pipeline, 'feature_names_in_'):
             feature_names = stage1_pipeline.feature_names_in_
-            print(f"Features from feature_names_in_: {len(feature_names)}")
-            print(f"First 10 features: {feature_names[:10]}")
-            stations = []
-            for feature in feature_names:
-                if 'cat__' in feature:
-                    station_name = feature.replace('cat__', '')
-                    stations.append(station_name)
-            if stations:
-                print(f"Extracted {len(stations)} stations from feature_names_in_")
-                return sorted(stations)
+            print(f"Features from feature_names_in_: {feature_names}")
+            # If 'Station' is in the original feature names, we can't extract individual stations this way
+            if 'Station' in feature_names:
+                print("'Station' found in original features - using fallback list")
         
-        # Fallback: If we can't extract from model, use a comprehensive list
-        print("Could not extract stations from model, using fallback list")
-        return get_fallback_stations()
+        # Return results
+        if all_stations:
+            stations_list = sorted(list(all_stations))
+            print(f"Successfully extracted {len(stations_list)} unique stations")
+            print(f"Sample stations: {stations_list[:10]}")
+            return stations_list
+        else:
+            print("No stations extracted, using fallback list")
+            return get_fallback_stations()
         
     except Exception as e:
         print(f"Error extracting stations from model: {e}")
@@ -821,11 +812,22 @@ def debug_feature_names():
                 try:
                     features = step.get_feature_names_out()
                     print(f"Step '{step_name}' has {len(features)} features:")
-                    # Print features that might be stations
-                    station_features = [f for f in features if 'cat__' in f]
-                    print(f"Found {len(station_features)} station features")
-                    for feature in station_features[:20]:  # First 20 station features
+                    
+                    # Print all features that might be related to stations
+                    station_related_features = [f for f in features if any(prefix in f for prefix in ['Station', 'station', 'cat__', 'remainder__'])]
+                    print(f"Found {len(station_related_features)} station-related features")
+                    
+                    for feature in station_related_features[:20]:  # First 20 station-related features
                         print(f"  - {feature}")
+                        
+                    # Also show the pattern of prefixes
+                    prefixes = {}
+                    for feature in features:
+                        if '__' in feature:
+                            prefix = feature.split('__')[0]
+                            prefixes[prefix] = prefixes.get(prefix, 0) + 1
+                    print("Prefix counts:", prefixes)
+                    
                 except Exception as e:
                     print(f"Error in step '{step_name}': {e}")
 
