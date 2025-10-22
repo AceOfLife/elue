@@ -746,55 +746,34 @@ def load_stations_from_model():
             if preprocessor and hasattr(preprocessor, 'get_feature_names_out'):
                 feature_names = preprocessor.get_feature_names_out()
                 print(f"Total features: {len(feature_names)}")
-                print(f"First 20 features: {feature_names[:20]}")  # Show more features for debugging
+                print(f"First 10 features: {feature_names[:10]}")
                 
-                # Extract station names from feature names - FIXED: Look for actual station features
+                # Extract station names from feature names
                 stations = []
                 for feature in feature_names:
-                    # Look for actual station features (not category features)
-                    if 'cat__' in feature and 'Category_' not in feature:
+                    # Look for features with 'cat__' prefix (your actual prefix)
+                    if 'cat__' in feature:
                         # Remove the 'cat__' prefix to get the station name
                         station_name = feature.replace('cat__', '')
                         stations.append(station_name)
                 
                 if stations:
                     print(f"Extracted {len(stations)} stations from model")
-                    print(f"Sample stations: {stations[:10]}")  # Show first 10 stations
+                    print(f"Sample stations: {stations[:10]}")  # Show first 10
                     return sorted(stations)
                 else:
-                    print("No station features found - checking for alternative patterns")
-                    
-                    # Alternative: Look for any features that might be stations
-                    # Exclude the Category features we know are product categories
-                    category_keywords = ['Category_', 'Month_', 'Daypart_']  # Add other non-station prefixes
-                    potential_stations = []
-                    for feature in feature_names:
-                        if 'cat__' in feature and not any(keyword in feature for keyword in category_keywords):
-                            station_name = feature.replace('cat__', '')
-                            potential_stations.append(station_name)
-                    
-                    if potential_stations:
-                        print(f"Found {len(potential_stations)} potential stations")
-                        print(f"Sample: {potential_stations[:10]}")
-                        return sorted(potential_stations)
-                    else:
-                        print("No station features found in model, using fallback")
+                    print("No station features found with 'cat__' prefix")
         
         # Alternative: Check if model has feature_names_in_ attribute
         if hasattr(stage1_pipeline, 'feature_names_in_'):
             feature_names = stage1_pipeline.feature_names_in_
             print(f"Features from feature_names_in_: {len(feature_names)}")
-            print(f"First 20 features: {feature_names[:20]}")
-            # Look for station columns in the original feature names
+            print(f"First 10 features: {feature_names[:10]}")
             stations = []
             for feature in feature_names:
-                if feature == 'Station':  # If Station is a column name
-                    # This means Station is a categorical variable in the original data
-                    # We need to see what values it can take
-                    print("Found 'Station' column in original features")
-                elif feature not in ['Category', 'Month_name', 'Daypart', 'log_Spend', 'Spend']:
-                    stations.append(feature)
-            
+                if 'cat__' in feature:
+                    station_name = feature.replace('cat__', '')
+                    stations.append(station_name)
             if stations:
                 print(f"Extracted {len(stations)} stations from feature_names_in_")
                 return sorted(stations)
@@ -832,47 +811,28 @@ def load_stations():
     """Load stations from model or fallback"""
     return load_stations_from_model()
 
-# Debug function to see model features
-def debug_model_features():
-    """Debug function to see all model features"""
-    print("=== DEBUGGING MODEL FEATURES ===")
+# Debug function to see feature names
+def debug_feature_names():
+    """Debug function to see all feature names and their prefixes"""
+    print("=== DEBUGGING FEATURE NAMES ===")
     if hasattr(stage1_pipeline, 'named_steps'):
         for step_name, step in stage1_pipeline.named_steps.items():
             if hasattr(step, 'get_feature_names_out'):
                 try:
                     features = step.get_feature_names_out()
-                    print(f"Step '{step_name}' has {len(features)} features")
-                    
-                    # Show all feature patterns to understand what we have
-                    print("Feature patterns found:")
-                    pattern_counts = {}
-                    for feature in features:
-                        if 'cat__' in feature:
-                            prefix = feature.split('_')[0] + '_' + feature.split('_')[1] if '_' in feature else feature
-                            pattern_counts[prefix] = pattern_counts.get(prefix, 0) + 1
-                    
-                    for pattern, count in pattern_counts.items():
-                        print(f"  - {pattern}: {count} features")
-                        
-                    # Show first 30 features of each type for detailed inspection
-                    cat_features = [f for f in features if 'cat__' in f]
-                    print(f"\nFirst 30 categorical features:")
-                    for feature in cat_features[:30]:
+                    print(f"Step '{step_name}' has {len(features)} features:")
+                    # Print features that might be stations
+                    station_features = [f for f in features if 'cat__' in f]
+                    print(f"Found {len(station_features)} station features")
+                    for feature in station_features[:20]:  # First 20 station features
                         print(f"  - {feature}")
-                        
                 except Exception as e:
                     print(f"Error in step '{step_name}': {e}")
 
-# Load historical data for data-driven calibrations - WITH ERROR HANDLING
+# Load historical data for data-driven calibrations
 def load_historical_data():
     try:
-        historical_path = BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv"
-        if not historical_path.exists():
-            print(f"Historical data file not found at {historical_path}")
-            print("Using default efficiency values")
-            return {'TV': 0.8, 'Radio': 0.6, 'Other': 0.7}
-            
-        historical_df = pd.read_csv(historical_path)
+        historical_df = pd.read_csv(BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv")
         # Assume historical data has 'Medium' (derived), 'GRP', and estimate reach efficiency
         # For data-driven: Compute average GRP per medium to infer efficiency caps
         historical_df['Medium'] = historical_df['Station'].apply(detect_medium)
@@ -894,25 +854,13 @@ def load_historical_data():
         return {'TV': 0.8, 'Radio': 0.6, 'Other': 0.7}
 
 HISTORICAL_EFFICIENCIES = load_historical_data()
-print(f"Data-driven efficiencies: {HISTORICAL_EFFICIENCIES}")
+print(f"Data-driven efficiencies from historical: {HISTORICAL_EFFICIENCIES}")
 
-# Load historical metrics data for all calculations - WITH ERROR HANDLING
+# Load historical metrics data for all calculations
 def load_historical_metrics():
     """Load historical data to calibrate all metrics"""
     try:
-        historical_path = BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv"
-        if not historical_path.exists():
-            print(f"Historical data file not found at {historical_path}")
-            print("Using default metric values")
-            return {
-                'paid_ratios': {'TV': 0.85, 'Radio': 0.90, 'Other': 0.80},
-                'owned_ratios': {'TV': 0.10, 'Radio': 0.05, 'Other': 0.15},
-                'earned_ratios': {'TV': 0.05, 'Radio': 0.05, 'Other': 0.05},
-                'multi_channel_uplift': {'TV': 1.15, 'Radio': 1.10, 'Other': 1.12},
-                'arp_ratios': {'TV': 0.85, 'Radio': 0.88, 'Other': 0.82}
-            }
-            
-        historical_df = pd.read_csv(historical_path)
+        historical_df = pd.read_csv(BASE_DIR.parent / "data" / "cleaned20_24_watchdog_data.csv")
         historical_df['Medium'] = historical_df['Station'].apply(detect_medium)
         
         metrics_data = {}
@@ -1104,9 +1052,8 @@ def calculate_exclusive_reach(medium: str, grp: float, total_grp: float, other_m
 
 @app.get("/", response_class=HTMLResponse)
 async def read_form(request: Request):
-    # Temporary debug to see what's in the model
-    debug_model_features()
-    
+    # Temporary debug to see what stations are being loaded
+    debug_feature_names()
     stations = load_stations()
     print(f"Loaded {len(stations)} stations for dropdown")
     
