@@ -165,29 +165,41 @@ body {
 /* Tooltip Styles */
 .tooltip {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     cursor: help;
 }
 
 .tooltip .tooltiptext {
     visibility: hidden;
-    width: 200px;
+    width: 220px;
     background: var(--gray-800);
     color: white;
     text-align: center;
-    border-radius: 6px;
-    padding: 0.5rem;
+    border-radius: 8px;
+    padding: 0.75rem;
     position: absolute;
-    z-index: 1;
+    z-index: 1000;
     bottom: 125%;
     left: 50%;
-    margin-left: -100px;
+    transform: translateX(-50%);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: all 0.3s ease;
     font-size: 0.75rem;
     font-weight: normal;
-    text-transform: none;
-    letter-spacing: normal;
+    line-height: 1.4;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip .tooltiptext::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--gray-800) transparent transparent transparent;
 }
 
 .tooltip:hover .tooltiptext {
@@ -375,11 +387,14 @@ body {
 
 /* Animation Classes */
 .fade-in {
-    animation: fadeIn 0.5s ease-in;
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
 }
 
 .slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.6s ease-out forwards;
+    transform: translateY(20px);
+    opacity: 0;
 }
 
 @keyframes fadeIn {
@@ -809,4 +824,14 @@ body {
 
 .gradient-performance {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Slow spin animation for icons */
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
 }
