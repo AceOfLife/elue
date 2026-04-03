@@ -221,7 +221,7 @@
     <main class="container mx-auto px-4 py-8">
         <div class="{% if results %}max-w-full{% else %}max-w-3xl{% endif %} mx-auto">
 
-            <!-- ====================== FORM SECTION ====================== -->
+            <!-- FORM SECTION -->
             <div id="formSection" {% if results %}style="display: none;"{% endif %}>
 
                 <!-- Progress Stepper -->
@@ -590,80 +590,58 @@
                                         </div>
                                     </td>
                                     <td class="border border-gray-200 align-top">
-                                        {% if tv_budget and tv_budget|float > 0 %}
+                                        {% if tv_budget is defined and tv_budget|float > 0 %}
                                             <div class="text-[#3b82f6]">₦{{ "{:,.2f}".format(tv_budget|float) }}</div>
                                         {% endif %}
-                                        {% if radio_budget and radio_budget|float > 0 %}
+                                        {% if radio_budget is defined and radio_budget|float > 0 %}
                                             <div class="text-[#10b981] mt-2">₦{{ "{:,.2f}".format(radio_budget|float) }}</div>
                                         {% endif %}
-                                        {% if other_budget and other_budget|float > 0 %}
+                                        {% if other_budget is defined and other_budget|float > 0 %}
                                             <div class="text-[#800080] mt-2">₦{{ "{:,.2f}".format(other_budget|float) }}</div>
                                         {% endif %}
                                     </td>
                                     <td class="border border-gray-200 align-top">
-                                        {% if tv_percentage and tv_percentage|float > 0 %}
+                                        {% if tv_percentage is defined and tv_percentage|float > 0 %}
                                             <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_percentage|float) }}%</div>
                                         {% endif %}
-                                        {% if radio_percentage and radio_percentage|float > 0 %}
+                                        {% if radio_percentage is defined and radio_percentage|float > 0 %}
                                             <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_percentage|float) }}%</div>
                                         {% endif %}
-                                        {% if other_percentage and other_percentage|float > 0 %}
+                                        {% if other_percentage is defined and other_percentage|float > 0 %}
                                             <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_percentage|float) }}%</div>
                                         {% endif %}
                                     </td>
                                     <td class="border border-gray-200 align-top">
-                                        {% if tv_budget and tv_budget|float > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_reach) if tv_reach > 0 else '0.0' }}%</div>
+                                        {% if tv_budget is defined and tv_budget|float > 0 %}
+                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_reach) if tv_reach is defined and tv_reach > 0 else '0.0' }}%</div>
                                         {% endif %}
-                                        {% if radio_budget and radio_budget|float > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_reach) if radio_reach > 0 else '0.0' }}%</div>
+                                        {% if radio_budget is defined and radio_budget|float > 0 %}
+                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_reach) if radio_reach is defined and radio_reach > 0 else '0.0' }}%</div>
                                         {% endif %}
-                                        {% if other_budget and other_budget|float > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_reach) if other_reach > 0 else '0.0' }}%</div>
-                                        {% endif %}
-                                    </td>
-                                    <td class="border border-gray-200 align-top">
-                                        {% if tv_budget and tv_budget|float > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_exclusive) if tv_exclusive > 0 else '0.0' }}%</div>
-                                        {% endif %}
-                                        {% if radio_budget and radio_budget|float > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_exclusive) if radio_exclusive > 0 else '0.0' }}%</div>
-                                        {% endif %}
-                                        {% if other_budget and other_budget|float > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_exclusive) if other_exclusive > 0 else '0.0' }}%</div>
+                                        {% if other_budget is defined and other_budget|float > 0 %}
+                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_reach) if other_reach is defined and other_reach > 0 else '0.0' }}%</div>
                                         {% endif %}
                                     </td>
                                     <td class="border border-gray-200 align-top">
-                                        {% if results %}
-                                            {% set tv_cprp = namespace(value=0) %}
-                                            {% set radio_cprp = namespace(value=0) %}
-                                            {% set other_cprp = namespace(value=0) %}
-                                            {% set tv_count = namespace(value=0) %}
-                                            {% set radio_count = namespace(value=0) %}
-                                            {% set other_count = namespace(value=0) %}
-                                            {% for row in results %}
-                                                {% if row.Medium == 'TV' %}
-                                                    {% set tv_cprp.value = tv_cprp.value + (row.CPRP|float if row.CPRP else 0) %}
-                                                    {% set tv_count.value = tv_count.value + 1 %}
-                                                {% elif row.Medium == 'Radio' %}
-                                                    {% set radio_cprp.value = radio_cprp.value + (row.CPRP|float if row.CPRP else 0) %}
-                                                    {% set radio_count.value = radio_count.value + 1 %}
-                                                {% else %}
-                                                    {% set other_cprp.value = other_cprp.value + (row.CPRP|float if row.CPRP else 0) %}
-                                                    {% set other_count.value = other_count.value + 1 %}
-                                                {% endif %}
-                                            {% endfor %}
-                                            {% if tv_budget and tv_budget|float > 0 and tv_count.value > 0 %}
-                                                <div class="text-[#3b82f6]">₦{{ "%.2f"|format(tv_cprp.value / tv_count.value) }}</div>
-                                            {% endif %}
-                                            {% if radio_budget and radio_budget|float > 0 and radio_count.value > 0 %}
-                                                <div class="text-[#10b981] mt-2">₦{{ "%.2f"|format(radio_cprp.value / radio_count.value) }}</div>
-                                            {% endif %}
-                                            {% if other_budget and other_budget|float > 0 and other_count.value > 0 %}
-                                                <div class="text-[#800080] mt-2">₦{{ "%.2f"|format(other_cprp.value / other_count.value) }}</div>
-                                            {% endif %}
-                                        {% else %}
-                                            <div>₦0.00</div>
+                                        {% if tv_budget is defined and tv_budget|float > 0 %}
+                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_exclusive) if tv_exclusive is defined and tv_exclusive > 0 else '0.0' }}%</div>
+                                        {% endif %}
+                                        {% if radio_budget is defined and radio_budget|float > 0 %}
+                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_exclusive) if radio_exclusive is defined and radio_exclusive > 0 else '0.0' }}%</div>
+                                        {% endif %}
+                                        {% if other_budget is defined and other_budget|float > 0 %}
+                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_exclusive) if other_exclusive is defined and other_exclusive > 0 else '0.0' }}%</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="border border-gray-200 align-top">
+                                        {% if tv_cprp is defined and tv_cprp > 0 %}
+                                            <div class="text-[#3b82f6]">₦{{ "%.2f"|format(tv_cprp) }}</div>
+                                        {% endif %}
+                                        {% if radio_cprp is defined and radio_cprp > 0 %}
+                                            <div class="text-[#10b981] mt-2">₦{{ "%.2f"|format(radio_cprp) }}</div>
+                                        {% endif %}
+                                        {% if other_cprp is defined and other_cprp > 0 %}
+                                            <div class="text-[#800080] mt-2">₦{{ "%.2f"|format(other_cprp) }}</div>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -923,7 +901,6 @@
             }
         });
 
-        // Original chart initialization from your code
         function initializeCharts() {
             const chartDataJson = '{{ chart_data | safe }}';
             let results = [];
