@@ -221,7 +221,7 @@
     <main class="container mx-auto px-4 py-8">
         <div class="{% if results %}max-w-full{% else %}max-w-3xl{% endif %} mx-auto">
 
-            <!-- ====================== FORM SECTION ====================== -->
+            <!-- FORM SECTION -->
             <div id="formSection" {% if results %}style="display: none;"{% endif %}>
 
                 <!-- Progress Stepper -->
@@ -241,7 +241,7 @@
 
                     <input type="hidden" id="Month_name" name="Month_name">
 
-                    <!-- Step 1 -->
+                    <!-- Step 1: Campaign Basics -->
                     <div id="step1" class="step p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Campaign Basics</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -306,7 +306,7 @@
                         </div>
                     </div>
 
-                    <!-- Step 2 -->
+                    <!-- Step 2: Budget & Allocation -->
                     <div id="step2" class="step hidden p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Budget & Allocation</h2>
                         <div class="space-y-8">
@@ -359,7 +359,7 @@
                         </div>
                     </div>
 
-                    <!-- Step 3 -->
+                    <!-- Step 3: Stations & Ad Details -->
                     <div id="step3" class="step hidden p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Stations & Ad Details</h2>
                         <div>
@@ -382,7 +382,7 @@
                         </div>
                     </div>
 
-                    <!-- Step 4 -->
+                    <!-- Step 4: Brand Logo Upload -->
                     <div id="step4" class="step hidden p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Brand Logo Upload</h2>
                         <div id="logoDropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
