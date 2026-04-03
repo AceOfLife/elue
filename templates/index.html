@@ -221,7 +221,7 @@
     <main class="container mx-auto px-4 py-8">
         <div class="{% if results %}max-w-full{% else %}max-w-3xl{% endif %} mx-auto">
 
-            <!-- FORM SECTION -->
+            <!-- ====================== FORM SECTION ====================== -->
             <div id="formSection" {% if results %}style="display: none;"{% endif %}>
 
                 <!-- Progress Stepper -->
@@ -612,36 +612,54 @@
                                         {% endif %}
                                     </td>
                                     <td class="border border-gray-200 align-top">
-                                        {% if tv_budget is defined and tv_budget|float > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_reach) if tv_reach is defined and tv_reach > 0 else '0.0' }}%</div>
+                                        {% if tv_reach is defined and tv_reach > 0 %}
+                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_reach) }}</div>
+                                        {% else %}
+                                            <div class="text-[#3b82f6]">0.0%</div>
                                         {% endif %}
-                                        {% if radio_budget is defined and radio_budget|float > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_reach) if radio_reach is defined and radio_reach > 0 else '0.0' }}%</div>
+                                        {% if radio_reach is defined and radio_reach > 0 %}
+                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_reach) }}</div>
+                                        {% else %}
+                                            <div class="text-[#10b981] mt-2">0.0%</div>
                                         {% endif %}
-                                        {% if other_budget is defined and other_budget|float > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_reach) if other_reach is defined and other_reach > 0 else '0.0' }}%</div>
+                                        {% if other_reach is defined and other_reach > 0 %}
+                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_reach) }}</div>
+                                        {% else %}
+                                            <div class="text-[#800080] mt-2">0.0%</div>
                                         {% endif %}
                                     </td>
                                     <td class="border border-gray-200 align-top">
-                                        {% if tv_budget is defined and tv_budget|float > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_exclusive) if tv_exclusive is defined and tv_exclusive > 0 else '0.0' }}%</div>
+                                        {% if tv_exclusive is defined and tv_exclusive > 0 %}
+                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_exclusive) }}</div>
+                                        {% else %}
+                                            <div class="text-[#3b82f6]">0.0%</div>
                                         {% endif %}
-                                        {% if radio_budget is defined and radio_budget|float > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_exclusive) if radio_exclusive is defined and radio_exclusive > 0 else '0.0' }}%</div>
+                                        {% if radio_exclusive is defined and radio_exclusive > 0 %}
+                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_exclusive) }}</div>
+                                        {% else %}
+                                            <div class="text-[#10b981] mt-2">0.0%</div>
                                         {% endif %}
-                                        {% if other_budget is defined and other_budget|float > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_exclusive) if other_exclusive is defined and other_exclusive > 0 else '0.0' }}%</div>
+                                        {% if other_exclusive is defined and other_exclusive > 0 %}
+                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_exclusive) }}</div>
+                                        {% else %}
+                                            <div class="text-[#800080] mt-2">0.0%</div>
                                         {% endif %}
                                     </td>
                                     <td class="border border-gray-200 align-top">
                                         {% if tv_cprp is defined and tv_cprp > 0 %}
                                             <div class="text-[#3b82f6]">₦{{ "%.2f"|format(tv_cprp) }}</div>
+                                        {% else %}
+                                            <div class="text-[#3b82f6]">₦0.00</div>
                                         {% endif %}
                                         {% if radio_cprp is defined and radio_cprp > 0 %}
                                             <div class="text-[#10b981] mt-2">₦{{ "%.2f"|format(radio_cprp) }}</div>
+                                        {% else %}
+                                            <div class="text-[#10b981] mt-2">₦0.00</div>
                                         {% endif %}
                                         {% if other_cprp is defined and other_cprp > 0 %}
                                             <div class="text-[#800080] mt-2">₦{{ "%.2f"|format(other_cprp) }}</div>
+                                        {% else %}
+                                            <div class="text-[#800080] mt-2">₦0.00</div>
                                         {% endif %}
                                     </td>
                                 </tr>
