@@ -1119,7 +1119,7 @@ async def read_form(request: Request):
     print(f"Loaded {len(stations)} stations for dropdown")
     
     # Provide default values for all template variables
-    return templates.TemplateResponse("index.html", {
+    context = {
         "request": request,
         "stations": stations,
         "results": [],  # Empty list instead of undefined
@@ -1153,7 +1153,9 @@ async def read_form(request: Request):
         "tv_cprp": 0,
         "radio_cprp": 0,
         "other_cprp": 0
-    })
+    }
+    
+    return templates.TemplateResponse("index.html", {"request": request, **context})
 
 @app.post("/predict/", response_class=HTMLResponse)
 async def predict(
@@ -1207,7 +1209,7 @@ async def predict(
         # Validate file extension
         file_extension = os.path.splitext(logoFile.filename)[1].lower()
         if file_extension not in ALLOWED_EXTENSIONS:
-            return templates.TemplateResponse("index.html", {
+            context = {
                 "request": request,
                 "stations": load_stations(),
                 "results": [],
@@ -1248,7 +1250,8 @@ async def predict(
                 "tv_cprp": 0,
                 "radio_cprp": 0,
                 "other_cprp": 0
-            })
+            }
+            return templates.TemplateResponse("index.html", {"request": request, **context})
         
         # Generate a unique filename to avoid conflicts
         logo_filename = f"{uuid.uuid4().hex}{file_extension}"
@@ -1399,7 +1402,7 @@ async def predict(
         print(f"Station {i+1}: {row['Station']} - TRP: {row['TRP']:.4f} - GRP: {row['GRP']:.4f}")
     print("========================")
 
-    return templates.TemplateResponse("index.html", {
+    context = {
         "request": request,
         "stations": load_stations(),
         "results": chart_data or [],  # Empty list if None
@@ -1439,7 +1442,9 @@ async def predict(
         "tv_cprp": tv_cprp,
         "radio_cprp": radio_cprp,
         "other_cprp": other_cprp
-    })
+    }
+    
+    return templates.TemplateResponse("index.html", {"request": request, **context})
 
 @app.post("/predict_batch/", response_class=HTMLResponse)
 async def predict_batch(request: Request, file: UploadFile = File(...)):
@@ -1448,7 +1453,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
 
         required = {"Category", "Month_name", "Daypart", "Station", "Normalize 30s", "Duration", "CampaignStart", "CampaignEnd"}
         if not required.issubset(df.columns):
-            return templates.TemplateResponse("index.html", {
+            context = {
                 "request": request,
                 "stations": load_stations(),
                 "results": [],
@@ -1483,14 +1488,15 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "tv_cprp": 0,
                 "radio_cprp": 0,
                 "other_cprp": 0
-            })
+            }
+            return templates.TemplateResponse("index.html", {"request": request, **context})
 
         if "Spend" in df.columns:
             total_spend = df["Spend"].sum(skipna=True)
             n = len(df)
             df["Spend"] = df["Spend"].fillna(total_spend / n)
         else:
-            return templates.TemplateResponse("index.html", {
+            context = {
                 "request": request,
                 "stations": load_stations(),
                 "results": [],
@@ -1525,7 +1531,8 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "tv_cprp": 0,
                 "radio_cprp": 0,
                 "other_cprp": 0
-            })
+            }
+            return templates.TemplateResponse("index.html", {"request": request, **context})
 
         df["Medium"] = df["Station"].apply(detect_medium)
         campaign_duration_weeks = calculate_campaign_duration(
@@ -1647,7 +1654,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
         for record in chart_data:
             record["Frequency"] = avg_frequency
 
-        return templates.TemplateResponse("index.html", {
+        context = {
             "request": request,
             "stations": load_stations(),
             "results": chart_data or [],  # Empty list if None
@@ -1681,10 +1688,12 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "tv_cprp": tv_cprp,
             "radio_cprp": radio_cprp,
             "other_cprp": other_cprp
-        })
+        }
+        
+        return templates.TemplateResponse("index.html", {"request": request, **context})
 
     except Exception as e:
-        return templates.TemplateResponse("index.html", {
+        context = {
             "request": request,
             "stations": load_stations(),
             "results": [],  # Empty results on error
@@ -1720,7 +1729,8 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "tv_cprp": 0,
             "radio_cprp": 0,
             "other_cprp": 0
-        })
+        }
+        return templates.TemplateResponse("index.html", {"request": request, **context})
 
 
 import os

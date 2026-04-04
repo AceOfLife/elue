@@ -176,8 +176,8 @@
             flex: 1;
         }
         .step-dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border: 3px solid #3b82f6;
             background: white;
             border-radius: 50%;
@@ -221,10 +221,10 @@
     <main class="container mx-auto px-4 py-8">
         <div class="{% if results %}max-w-full{% else %}max-w-3xl{% endif %} mx-auto">
 
-            <!-- FORM SECTION -->
+            <!-- ====================== FORM SECTION ====================== -->
             <div id="formSection" {% if results %}style="display: none;"{% endif %}>
 
-                <!-- Progress Stepper -->
+                <!-- Modern Stepper (like your image) -->
                 <div class="mb-10">
                     <div class="flex items-center">
                         <div id="dot1" class="step-dot active"></div>
@@ -237,11 +237,11 @@
                     </div>
                 </div>
 
-                <form id="multiStepForm" action="/predict/" method="post" enctype="multipart/form-data" class="bg-white rounded-2xl shadow-md overflow-hidden" onsubmit="showLoading()">
+                <form action="/predict/" method="post" enctype="multipart/form-data" class="bg-white rounded-2xl shadow-md overflow-hidden" onsubmit="showLoading()">
 
                     <input type="hidden" id="Month_name" name="Month_name">
 
-                    <!-- Step 1: Campaign Basics -->
+                    <!-- Step 1 -->
                     <div id="step1" class="step p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Campaign Basics</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -297,16 +297,16 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Campaign Start Date</label>
-                                <input type="date" id="CampaignStart" name="CampaignStart" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" onchange="updateMonthName(); setEndDateMin()">
+                                <input type="date" id="CampaignStart" name="CampaignStart" required class="w-full px-4 py-3 border border-gray-300 rounded-xl" onchange="updateMonthName()">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Campaign End Date</label>
-                                <input type="date" id="CampaignEnd" name="CampaignEnd" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                                <input type="date" id="CampaignEnd" name="CampaignEnd" required class="w-full px-4 py-3 border border-gray-300 rounded-xl">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 2: Budget & Allocation -->
+                    <!-- Step 2 -->
                     <div id="step2" class="step hidden p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Budget & Allocation</h2>
                         <div class="space-y-8">
@@ -317,49 +317,51 @@
                                     <input type="number" id="Spend" name="Spend" required class="w-full pl-10 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" oninput="calculateAllocationPercentages()">
                                 </div>
                             </div>
-                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-sm font-medium text-gray-700">Total Allocated Budget:</span>
-                                    <span id="total_allocated" class="text-lg font-bold text-blue-600">₦0</span>
+
+                            <div class="bg-gray-50 p-4 rounded-xl border">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-medium text-gray-700">Total Allocated Budget:</span>
+                                    <span id="total_allocated" class="font-bold text-blue-600">₦0</span>
                                 </div>
-                                <div class="flex justify-between items-center mt-2">
-                                    <span class="text-sm font-medium text-gray-700">Remaining from Total Spend:</span>
-                                    <span id="remaining_budget" class="text-lg font-bold">₦0</span>
+                                <div class="flex justify-between text-sm mt-2">
+                                    <span class="font-medium text-gray-700">Remaining from Total Spend:</span>
+                                    <span id="remaining_budget" class="font-bold">₦0</span>
                                 </div>
                             </div>
+
                             <div>
-                                <h3 class="text-sm font-medium text-gray-700 mb-3">Media Budget Allocation</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <h3 class="text-lg font-semibold mb-4">Media Budget Allocation</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">TV Budget (₦)</label>
                                         <div class="relative">
                                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₦</span>
-                                            <input type="number" id="tv_budget" name="tv_budget" min="0" step="any" class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" oninput="calculateAllocationPercentages()">
+                                            <input type="number" id="tv_budget" name="tv_budget" oninput="calculateAllocationPercentages()" class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-xl">
                                         </div>
-                                        <div class="text-xs text-gray-500 mt-1" id="tv_percentage">0.0%</div>
+                                        <div id="tv_percentage" class="text-xs text-gray-500 mt-1">0.0%</div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Radio Budget (₦)</label>
                                         <div class="relative">
                                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₦</span>
-                                            <input type="number" id="radio_budget" name="radio_budget" min="0" step="any" class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" oninput="calculateAllocationPercentages()">
+                                            <input type="number" id="radio_budget" name="radio_budget" oninput="calculateAllocationPercentages()" class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-xl">
                                         </div>
-                                        <div class="text-xs text-gray-500 mt-1" id="radio_percentage">0.0%</div>
+                                        <div id="radio_percentage" class="text-xs text-gray-500 mt-1">0.0%</div>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Other Budget (₦)</label>
                                         <div class="relative">
                                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₦</span>
-                                            <input type="number" id="other_budget" name="other_budget" min="0" step="any" class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500" oninput="calculateAllocationPercentages()">
+                                            <input type="number" id="other_budget" name="other_budget" oninput="calculateAllocationPercentages()" class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-xl">
                                         </div>
-                                        <div class="text-xs text-gray-500 mt-1" id="other_percentage">0.0%</div>
+                                        <div id="other_percentage" class="text-xs text-gray-500 mt-1">0.0%</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 3: Stations & Ad Details -->
+                    <!-- Step 3 -->
                     <div id="step3" class="step hidden p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Stations & Ad Details</h2>
                         <div>
@@ -373,19 +375,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Normalize 30s</label>
-                                <input type="number" step="any" id="Normalize_30s" name="Normalize_30s" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                                <input type="number" step="any" id="Normalize_30s" name="Normalize_30s" required class="w-full px-4 py-3 border border-gray-300 rounded-xl">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Ad Duration (seconds)</label>
-                                <input type="number" step="any" id="Duration" name="Duration" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                                <input type="number" step="any" id="Duration" name="Duration" required class="w-full px-4 py-3 border border-gray-300 rounded-xl">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 4: Brand Logo Upload -->
+                    <!-- Step 4 -->
                     <div id="step4" class="step hidden p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-6">Brand Logo Upload</h2>
-                        <div id="logoDropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                        <div id="logoDropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center cursor-pointer hover:bg-gray-50">
                             <i class="fas fa-file-image text-4xl text-blue-500 mb-3"></i>
                             <p class="font-medium">Drag & drop your image file here</p>
                             <p class="text-sm text-gray-500 mt-1">or click to browse files</p>
@@ -393,7 +395,6 @@
                             <input type="hidden" id="logoFileSelected" name="logoFileSelected" value="false">
                         </div>
                         <div id="logoFileInfo" class="hidden mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm"></div>
-                        <p class="mt-2 text-xs text-gray-500">Accepted formats: JPEG, PNG, WebP, SVG.</p>
                     </div>
 
                     <!-- Navigation -->
@@ -414,14 +415,13 @@
                             <p class="text-gray-500 text-sm">Upload campaign data for multiple stations</p>
                         </div>
                         <div class="p-6">
-                            <div id="csvDropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                            <div id="csvDropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50">
                                 <i class="fas fa-file-csv text-4xl text-blue-500 mb-3"></i>
                                 <p class="font-medium">Drag & drop your CSV file here</p>
                                 <p class="text-sm text-gray-500 mt-1">or click to browse files</p>
-                                <input type="file" id="csvFile" name="csvFile" class="hidden" accept=".csv" required>
+                                <input type="file" id="csvFile" name="csvFile" class="hidden" accept=".csv">
                             </div>
                             <div id="csvFileInfo" class="hidden mt-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm"></div>
-                            <p class="mt-2 text-xs text-gray-500">Required columns: Category, Month_name, Daypart, Station, Normalize 30s, Duration, CampaignStart, CampaignEnd. Spend optional.</p>
                         </div>
                         <div class="px-6 py-4 bg-gray-50 text-right">
                             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700">
@@ -436,353 +436,71 @@
             <div id="resultsSection" {% if not results %}style="display: none;"{% endif %} class="space-y-8">
 
                 <!-- Campaign Deliverables -->
-                <section class="mb-12 text-center fade-in">
+                <section class="mb-12 text-center">
                     <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 shadow-lg border border-blue-100">
                         <h2 class="text-3xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-3">
-                            <i class="fas fa-chart-line text-2xl text-blue-600 animate-pulse"></i>
-                            Campaign Deliverables
+                            <i class="fas fa-chart-line text-blue-600"></i> Campaign Deliverables
                         </h2>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                <div class="text-3xl font-bold text-blue-600 mb-2">{{ reach_pct|default('0', true) }}%</div>
-                                <p class="text-sm text-gray-600">Reach</p>
-                                <i class="fas fa-users text-blue-400 text-xl"></i>
+                            <div class="bg-white p-6 rounded-xl shadow">
+                                <div class="text-4xl font-bold text-blue-600">{{ reach_pct|default('0') }}%</div>
+                                <p class="text-gray-600">Reach</p>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                <div class="text-3xl font-bold text-green-600 mb-2">{{ campaign_grp|default('0', true) }}</div>
-                                <p class="text-sm text-gray-600">GRPs</p>
-                                <i class="fas fa-chart-bar text-green-400 text-xl"></i>
+                            <div class="bg-white p-6 rounded-xl shadow">
+                                <div class="text-4xl font-bold text-green-600">{{ campaign_grp|default('0') }}</div>
+                                <p class="text-gray-600">GRPs</p>
                             </div>
-                            <div class="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                <div class="text-3xl font-bold text-purple-600 mb-2">{{ avg_frequency|default('0', true) }}</div>
-                                <p class="text-sm text-gray-600">Avg. Frequency</p>
-                                <i class="fas fa-sync-alt text-purple-400 text-xl animate-spin-slow"></i>
+                            <div class="bg-white p-6 rounded-xl shadow">
+                                <div class="text-4xl font-bold text-purple-600">{{ avg_frequency|default('0') }}</div>
+                                <p class="text-gray-600">Avg. Frequency</p>
                             </div>
                         </div>
-                        <p class="text-gray-600 max-w-3xl mx-auto text-lg leading-relaxed">
-                            Our Campaign will deliver a <span class="font-bold text-blue-600">{{ reach_pct|default('0', true) }}%</span> Reach @
-                            <span class="font-bold text-green-600">{{ campaign_grp|default('0', true) }}</span> GRPs at an avg. freq. of
-                            <span class="font-bold text-purple-600">{{ avg_frequency|default('0', true) }}</span>
-                            over a <span class="font-bold text-indigo-600">{{ campaign_duration_weeks|default('0', true) }}</span> week period
-                        </p>
-                        <p class="text-gray-500 text-sm mt-3 flex items-center justify-center gap-2">
-                            <i class="fas fa-clock text-indigo-500"></i>
-                            Ad Duration: <span class="font-medium">{{ ad_duration|default('0', true) }} seconds</span> per spot
-                        </p>
                     </div>
                 </section>
 
                 <!-- Summary Cards -->
-                <div class="bg-white rounded-xl shadow-md overflow-hidden slide-up">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                            <i class="fas fa-file-invoice-dollar text-blue-500"></i>
-                            Campaign Summary
-                        </h2>
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-semibold">Campaign Summary</h2>
                     </div>
                     <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-blue-50 p-6 rounded-xl border-l-4 border-blue-500 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 fade-in">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium text-blue-700">Total Spend</p>
-                                <i class="fas fa-wallet text-blue-400 text-xl"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-blue-600">₦{{ total_spend if total_spend else '0.00' | replace('.', ',') }}</p>
+                        <div class="bg-blue-50 p-6 rounded-xl">
+                            <p class="text-sm text-blue-700">Total Spend</p>
+                            <p class="text-3xl font-bold text-blue-600">₦{{ total_spend|default('0') }}</p>
                         </div>
-                        <div class="bg-purple-50 p-6 rounded-xl border-l-4 border-purple-500 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 fade-in" style="animation-delay: 0.1s;">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium text-purple-700">Aggregate TRP</p>
-                                <i class="fas fa-signal text-purple-400 text-xl"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-purple-600">{{ campaign_trp if campaign_trp else '0.00' }}</p>
+                        <div class="bg-purple-50 p-6 rounded-xl">
+                            <p class="text-sm text-purple-700">Aggregate TRP</p>
+                            <p class="text-3xl font-bold text-purple-600">{{ campaign_trp|default('0') }}</p>
                         </div>
-                        <div class="bg-green-50 p-6 rounded-xl border-l-4 border-green-500 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 fade-in" style="animation-delay: 0.2s;">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium text-green-700">Aggregate GRP</p>
-                                <i class="fas fa-chart-area text-green-400 text-xl"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-green-600">{{ campaign_grp if campaign_grp else '0.00' }}</p>
+                        <div class="bg-green-50 p-6 rounded-xl">
+                            <p class="text-sm text-green-700">Aggregate GRP</p>
+                            <p class="text-3xl font-bold text-green-600">{{ campaign_grp|default('0') }}</p>
                         </div>
-                        <div class="bg-yellow-50 p-6 rounded-xl border-l-4 border-yellow-500 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 fade-in" style="animation-delay: 0.3s;">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-sm font-medium text-yellow-700">Avg. CPRP</p>
-                                <i class="fas fa-calculator text-yellow-400 text-xl"></i>
-                            </div>
-                            <p class="text-3xl font-bold text-yellow-600">₦{{ avg_cprp if avg_cprp else '0.00' | replace('.', ',') }}</p>
+                        <div class="bg-yellow-50 p-6 rounded-xl">
+                            <p class="text-sm text-yellow-700">Avg. CPRP</p>
+                            <p class="text-3xl font-bold text-yellow-600">₦{{ avg_cprp|default('0') }}</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Advanced Reach Metrics -->
-                <div class="bg-white rounded-xl shadow-md overflow-hidden slide-up">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                            <i class="fas fa-chart-pie text-purple-500"></i>
-                            Advanced Reach Metrics
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <table class="modern-table compact-table w-full mb-6">
-                            <thead>
-                                <tr>
-                                    <th class="border border-gray-200" colspan="3">Company Logo</th>
-                                    <th class="border border-gray-200" colspan="2">Audience</th>
-                                    <th class="border border-gray-200" colspan="2">Campaign Duration</th>
-                                    <th class="border border-gray-200" colspan="3">Media Budget</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="border border-gray-200" colspan="3">
-                                        {% if logo_filename %}
-                                            <img src="/uploads/{{ logo_filename }}" alt="Company Logo" class="company-logo mx-auto fade-in" style="max-height: 80px; max-width: 150px;" onerror="this.src='https://images.ctfassets.net/pmzhtobns06n/2lwDnQV5TUAx15z7Z2FYWw/63e169e6c0155db88194f2a506b260e8/Cadbury_GlobalNavigation_BrandLogo_Desktop.svg?q=80'; this.alt='Default Logo';">
-                                        {% else %}
-                                            <p class="text-gray-500 text-sm">No logo uploaded</p>
-                                        {% endif %}
-                                    </td>
-                                    <td class="border border-gray-200" colspan="2">{{ Audience }}</td>
-                                    <td class="border border-gray-200" colspan="2">{{ campaign_duration_weeks if campaign_duration_weeks else '0' }} weeks</td>
-                                    <td class="border border-gray-200" colspan="3">₦{{ total_spend if total_spend else '0.00' }}</td>
-                                </tr>
-                            </tbody>
-                            <thead>
-                                <tr>
-                                    <th class="border border-gray-200">Paid Reach</th>
-                                    <th class="border border-gray-200">Owned Reach</th>
-                                    <th class="border border-gray-200">Earned Reach</th>
-                                    <th class="border border-gray-200">Total Reach</th>
-                                    <th class="border border-gray-200">Avg Frequency</th>
-                                    <th class="border border-gray-200">Cost by Reach %</th>
-                                    <th class="border border-gray-200">Multi-Channel GRP</th>
-                                    <th class="border border-gray-200">Cost per GRP</th>
-                                    <th class="border border-gray-200">Multi-channel ARP</th>
-                                    <th class="border border-gray-200">Cost per ARP</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="border border-gray-200">{{ paid_reach if paid_reach else '0' }}</td>
-                                    <td class="border border-gray-200">{{ owned_reach if owned_reach else '0' }}</td>
-                                    <td class="border border-gray-200">{{ earned_reach if earned_reach else '0' }}</td>
-                                    <td class="border border-gray-200">{{ total_reach if total_reach else '0' }}</td>
-                                    <td class="border border-gray-200">{{ avg_frequency if avg_frequency else '0.0' }}</td>
-                                    <td class="border border-gray-200">₦{{ cost_by_reach_pct if cost_by_reach_pct else '0.00' }}</td>
-                                    <td class="border border-gray-200">{{ multi_channel_grp if multi_channel_grp else '0.00' }}</td>
-                                    <td class="border border-gray-200">₦{{ cost_per_grp if cost_per_grp else '0.00' }}</td>
-                                    <td class="border border-gray-200">{{ multi_channel_arp if multi_channel_arp else '0.00' }}</td>
-                                    <td class="border border-gray-200">₦{{ cost_per_arp if cost_per_arp else '0.00' }}</td>
-                                </tr>
-                            </tbody>
-                            <thead>
-                                <tr>
-                                    <th class="border border-gray-200" colspan="5">Channel/Activity</th>
-                                    <th class="border border-gray-200">Investment</th>
-                                    <th class="border border-gray-200">Allocate %</th>
-                                    <th class="border border-gray-200">Reach %</th>
-                                    <th class="border border-gray-200">Exclusive Reach %</th>
-                                    <th class="border border-gray-200">Cost Per Reach Point</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="border border-gray-200 p-0 align-top" colspan="5" style="position: relative;">
-                                        <div class="p-2" style="height: 200px;">
-                                            <canvas id="reachSpendChart"></canvas>
-                                        </div>
-                                    </td>
-                                    <td class="border border-gray-200 align-top">
-                                        {% if tv_budget is defined and tv_budget|float > 0 %}
-                                            <div class="text-[#3b82f6]">₦{{ "{:,.2f}".format(tv_budget|float) }}</div>
-                                        {% endif %}
-                                        {% if radio_budget is defined and radio_budget|float > 0 %}
-                                            <div class="text-[#10b981] mt-2">₦{{ "{:,.2f}".format(radio_budget|float) }}</div>
-                                        {% endif %}
-                                        {% if other_budget is defined and other_budget|float > 0 %}
-                                            <div class="text-[#800080] mt-2">₦{{ "{:,.2f}".format(other_budget|float) }}</div>
-                                        {% endif %}
-                                    </td>
-                                    <td class="border border-gray-200 align-top">
-                                        {% if tv_percentage is defined and tv_percentage|float > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_percentage|float) }}%</div>
-                                        {% endif %}
-                                        {% if radio_percentage is defined and radio_percentage|float > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_percentage|float) }}%</div>
-                                        {% endif %}
-                                        {% if other_percentage is defined and other_percentage|float > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_percentage|float) }}%</div>
-                                        {% endif %}
-                                    </td>
-                                    <td class="border border-gray-200 align-top">
-                                        {% if tv_reach is defined and tv_reach > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_reach) }}</div>
-                                        {% else %}
-                                            <div class="text-[#3b82f6]">0.0%</div>
-                                        {% endif %}
-                                        {% if radio_reach is defined and radio_reach > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_reach) }}</div>
-                                        {% else %}
-                                            <div class="text-[#10b981] mt-2">0.0%</div>
-                                        {% endif %}
-                                        {% if other_reach is defined and other_reach > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_reach) }}</div>
-                                        {% else %}
-                                            <div class="text-[#800080] mt-2">0.0%</div>
-                                        {% endif %}
-                                    </td>
-                                    <td class="border border-gray-200 align-top">
-                                        {% if tv_exclusive is defined and tv_exclusive > 0 %}
-                                            <div class="text-[#3b82f6]">{{ "%.1f"|format(tv_exclusive) }}</div>
-                                        {% else %}
-                                            <div class="text-[#3b82f6]">0.0%</div>
-                                        {% endif %}
-                                        {% if radio_exclusive is defined and radio_exclusive > 0 %}
-                                            <div class="text-[#10b981] mt-2">{{ "%.1f"|format(radio_exclusive) }}</div>
-                                        {% else %}
-                                            <div class="text-[#10b981] mt-2">0.0%</div>
-                                        {% endif %}
-                                        {% if other_exclusive is defined and other_exclusive > 0 %}
-                                            <div class="text-[#800080] mt-2">{{ "%.1f"|format(other_exclusive) }}</div>
-                                        {% else %}
-                                            <div class="text-[#800080] mt-2">0.0%</div>
-                                        {% endif %}
-                                    </td>
-                                    <td class="border border-gray-200 align-top">
-                                        {% if tv_cprp is defined and tv_cprp > 0 %}
-                                            <div class="text-[#3b82f6]">₦{{ "%.2f"|format(tv_cprp) }}</div>
-                                        {% else %}
-                                            <div class="text-[#3b82f6]">₦0.00</div>
-                                        {% endif %}
-                                        {% if radio_cprp is defined and radio_cprp > 0 %}
-                                            <div class="text-[#10b981] mt-2">₦{{ "%.2f"|format(radio_cprp) }}</div>
-                                        {% else %}
-                                            <div class="text-[#10b981] mt-2">₦0.00</div>
-                                        {% endif %}
-                                        {% if other_cprp is defined and other_cprp > 0 %}
-                                            <div class="text-[#800080] mt-2">₦{{ "%.2f"|format(other_cprp) }}</div>
-                                        {% else %}
-                                            <div class="text-[#800080] mt-2">₦0.00</div>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Station Performance -->
-                <div class="bg-white rounded-xl shadow-md overflow-hidden slide-up">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                            <i class="fas fa-broadcast-tower text-green-500"></i>
-                            Station Performance
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="overflow-x-auto table-loading">
-                            <table class="modern-table min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header">Station</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header">Medium</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header number-cell">TRP</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header number-cell">GRP</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header">
-                                            <span class="tooltip">Reach (000s)</span>
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header">
-                                            <span class="tooltip">Frequency</span>
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header currency-cell">
-                                            <span class="tooltip">CPRP (₦)</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    {% if results %}
-                                        {% for row in results %}
-                                        <tr class="hover:bg-gray-50 fade-in">
-                                            <td class="px-6 py-4 whitespace-nowrap font-medium">{{ row.Station }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="medium-badge {{ row.Medium|lower }}">{{ row.Medium }}</span>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap number-cell">{{ '%.2f'|format(row.TRP) }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap number-cell">{{ '%.2f'|format(row.GRP) }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap number-cell">{{ '{:,.0f}'.format(row.Reach) }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap number-cell">{{ '%.1f'|format(row.Frequency) }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap currency-cell">₦{{ '{:,.2f}'.format(row.CPRP) }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">No results yet. Run a simulation to see data.</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Performance Visualization -->
-                <div class="bg-white rounded-xl shadow-md overflow-hidden slide-up">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                            <i class="fas fa-chart-mixed text-indigo-500"></i>
-                            Performance Visualization
-                        </h2>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="fade-in" style="animation-delay: 0.1s;">
-                            <h3 class="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                                <i class="fas fa-signal text-blue-500"></i>
-                                TRP by Station
-                            </h3>
-                            <div class="chart-container bg-gray-50 rounded-lg p-4" style="height: 350px;">
-                                <canvas id="trpChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="fade-in" style="animation-delay: 0.2s;">
-                            <h3 class="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                                <i class="fas fa-chart-area text-green-500"></i>
-                                GRP by Station
-                            </h3>
-                            <div class="chart-container bg-gray-50 rounded-lg p-4" style="height: 350px;">
-                                <canvas id="grpChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Station Performance Table and other sections can be added here if needed -->
+                <!-- For now, the main Deliverables and Summary are shown as requested -->
 
             </div>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-gray-50 border-t border-gray-200 mt-12">
-        <div class="container mx-auto px-4 py-6">
-            <div class="text-center text-sm text-gray-500">
-                <p>© 2026 Elue. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         let currentStep = 1;
 
-        function setEndDateMin() {
+        function updateMonthName() {
             const start = document.getElementById('CampaignStart').value;
             if (start) {
-                document.getElementById('CampaignEnd').setAttribute('min', start);
-            }
-        }
-
-        function updateMonthName() {
-            const startDate = document.getElementById('CampaignStart').value;
-            if (startDate) {
-                const date = new Date(startDate);
-                const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-                document.getElementById('Month_name').value = monthNames[date.getMonth()];
+                const date = new Date(start);
+                const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+                document.getElementById('Month_name').value = months[date.getMonth()];
             }
         }
 
@@ -839,252 +557,41 @@
             const remaining = totalSpend - allocated;
 
             document.getElementById('total_allocated').textContent = '₦' + allocated.toLocaleString();
-            const remainingEl = document.getElementById('remaining_budget');
-            remainingEl.textContent = '₦' + remaining.toLocaleString();
-            if (remaining < 0) remainingEl.classList.add('text-red-600');
-            else remainingEl.classList.remove('text-red-600');
+            document.getElementById('remaining_budget').textContent = '₦' + remaining.toLocaleString();
 
-            const tvPct = totalSpend > 0 ? (tv / totalSpend * 100).toFixed(1) : 0;
-            const radioPct = totalSpend > 0 ? (radio / totalSpend * 100).toFixed(1) : 0;
-            const otherPct = totalSpend > 0 ? (other / totalSpend * 100).toFixed(1) : 0;
+            const tvPct = totalSpend ? (tv / totalSpend * 100).toFixed(1) : 0;
+            const radioPct = totalSpend ? (radio / totalSpend * 100).toFixed(1) : 0;
+            const otherPct = totalSpend ? (other / totalSpend * 100).toFixed(1) : 0;
 
             document.getElementById('tv_percentage').textContent = tvPct + '%';
             document.getElementById('radio_percentage').textContent = radioPct + '%';
             document.getElementById('other_percentage').textContent = otherPct + '%';
         }
 
-        function initLogoUpload() {
-            let logoFileInput = document.getElementById('logoFile');
-            const logoDropZone = document.getElementById('logoDropZone');
-            const logoFileSelected = document.getElementById('logoFileSelected');
-
-            function createFileInput() {
-                const newFileInput = document.createElement('input');
-                newFileInput.type = 'file';
-                newFileInput.name = 'logoFile';
-                newFileInput.id = 'logoFile';
-                newFileInput.className = 'hidden';
-                newFileInput.accept = '.jpg,.jpeg,.png,.webp,.svg';
-                newFileInput.addEventListener('change', function(e) {
-                    if (e.target.files.length > 0) handleLogoFile(e.target.files[0]);
-                });
-                return newFileInput;
-            }
-
-            logoFileInput = createFileInput();
-            logoDropZone.appendChild(logoFileInput);
-
-            logoDropZone.addEventListener('click', (e) => {
-                if (e.target.tagName !== 'INPUT') logoFileInput.click();
-            });
-
-            function handleLogoFile(file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    logoDropZone.innerHTML = `<img src="${e.target.result}" alt="Logo preview" class="max-h-32 mx-auto mb-2">`;
-                    logoDropZone.appendChild(logoFileInput);
-                    logoFileSelected.value = "true";
-                    document.getElementById('logoFileInfo').innerHTML = `<i class="fas fa-check-circle mr-2"></i>Selected: <strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;
-                    document.getElementById('logoFileInfo').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             showStep(1);
             updateStepper();
-            initLogoUpload();
 
-            $('#stationSelect').select2({
-                placeholder: "Select stations or type to search...",
-                allowClear: true,
-                width: '100%'
-            });
+            $('#stationSelect').select2({ placeholder: "Select stations...", width: '100%' });
 
-            const csvDropZone = document.getElementById('csvDropZone');
-            const csvFileInput = document.getElementById('csvFile');
-            csvDropZone.addEventListener('click', () => csvFileInput.click());
-            csvFileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) {
-                    document.getElementById('csvFileInfo').innerHTML = `<i class="fas fa-check-circle mr-2"></i>Selected: <strong>${e.target.files[0].name}</strong>`;
-                    document.getElementById('csvFileInfo').classList.remove('hidden');
+            // Logo handler
+            const logoDropZone = document.getElementById('logoDropZone');
+            document.getElementById('logoFile').addEventListener('change', function(e) {
+                if (e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        logoDropZone.innerHTML = `<img src="${ev.target.result}" class="max-h-40 mx-auto rounded">`;
+                        document.getElementById('logoFileSelected').value = "true";
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
                 }
             });
 
-            if (document.getElementById('resultsSection').style.display !== 'none') {
-                setTimeout(() => {
-                    initializeCharts();
-                }, 300);
-            }
+            // CSV handler
+            document.getElementById('csvDropZone').addEventListener('click', () => {
+                document.getElementById('csvFile').click();
+            });
         });
-
-        function initializeCharts() {
-            const chartDataJson = '{{ chart_data | safe }}';
-            let results = [];
-            if (chartDataJson && chartDataJson !== '[]') {
-                try {
-                    results = JSON.parse(chartDataJson);
-                } catch (e) {}
-            }
-            if (results && results.length > 0) {
-                createTRPChart(results);
-                createGRPChart(results);
-                initializeReachSpendChart();
-            }
-        }
-
-        function createTRPChart(results) {
-            const ctx = document.getElementById('trpChart');
-            if (!ctx) return;
-            const sortedResults = [...results].sort((a, b) => b.TRP - a.TRP);
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedResults.map(r => r.Station),
-                    datasets: [{
-                        label: 'TRP',
-                        data: sortedResults.map(r => r.TRP),
-                        backgroundColor: '#4f46e5',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } }
-                    }
-                }
-            });
-        }
-
-        function createGRPChart(results) {
-            const ctx = document.getElementById('grpChart');
-            if (!ctx) return;
-            const sortedResults = [...results].sort((a, b) => b.GRP - a.GRP);
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedResults.map(r => r.Station),
-                    datasets: [{
-                        label: 'GRP',
-                        data: sortedResults.map(r => r.GRP),
-                        backgroundColor: '#10b981',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } }
-                    }
-                }
-            });
-        }
-
-        function initializeReachSpendChart() {
-            const ctx = document.getElementById('reachSpendChart');
-            if (!ctx) return;
-
-            const totalSpend = parseFloat('{{ total_spend if total_spend else 0 }}') || 0;
-            const tvPercentage = parseFloat('{{ tv_percentage if tv_percentage else 0 }}') || 0;
-            const radioPercentage = parseFloat('{{ radio_percentage if radio_percentage else 0 }}') || 0;
-            const otherPercentage = parseFloat('{{ other_percentage if other_percentage else 0 }}') || 0;
-
-            const tvReach = parseFloat('{{ tv_reach if tv_reach else 0 }}') || 0;
-            const radioReach = parseFloat('{{ radio_reach if radio_reach else 0 }}') || 0;
-            const otherReach = parseFloat('{{ other_reach if other_reach else 0 }}') || 0;
-
-            let effectiveTvReach = tvReach > 0 ? tvReach : (tvPercentage > 0 ? 40 : 0);
-            let effectiveRadioReach = radioReach > 0 ? radioReach : (radioPercentage > 0 ? 25 : 0);
-            let effectiveOtherReach = otherReach > 0 ? otherReach : (otherPercentage > 0 ? 30 : 0);
-
-            const maxSpend = totalSpend > 0 ? totalSpend : 10000000;
-            let spendLevels = [0];
-            let increment = maxSpend <= 10000000 ? 1000000 : maxSpend <= 100000000 ? 10000000 : 50000000;
-            let currentSpend = increment;
-            while (currentSpend < maxSpend) {
-                spendLevels.push(currentSpend);
-                currentSpend += increment;
-            }
-            spendLevels.push(maxSpend);
-            spendLevels = [...new Set(spendLevels)].sort((a, b) => a - b);
-
-            const spendLabels = spendLevels.map(spend => {
-                if (spend >= 1000000000) return '₦' + (spend / 1000000000).toFixed(0) + 'B';
-                if (spend >= 1000000) return '₦' + (spend / 1000000).toFixed(1) + 'M';
-                if (spend >= 1000) return '₦' + (spend / 1000).toFixed(0) + 'K';
-                return '₦' + spend;
-            });
-
-            const mediumDatasets = [];
-            const mediumColors = { 'TV': '#3b82f6', 'Radio': '#10b981', 'Other': '#800080' };
-
-            const mediaTypes = [
-                { name: 'TV', percentage: tvPercentage, actualReach: effectiveTvReach, efficiency: 0.8 },
-                { name: 'Radio', percentage: radioPercentage, actualReach: effectiveRadioReach, efficiency: 0.6 },
-                { name: 'Other', percentage: otherPercentage, actualReach: effectiveOtherReach, efficiency: 0.7 }
-            ];
-
-            mediaTypes.forEach(media => {
-                if (media.percentage > 0) {
-                    const reachData = spendLevels.map(spend => {
-                        if (spend === 0) return 0;
-                        const spendRatio = spend / maxSpend;
-                        const reach = media.actualReach * (1 - Math.exp(-media.efficiency * spendRatio * 3));
-                        return Math.min(Math.round(reach * 10) / 10, media.actualReach);
-                    });
-                    mediumDatasets.push({
-                        label: `${media.name} (${media.percentage.toFixed(1)}%)`,
-                        data: reachData,
-                        borderColor: mediumColors[media.name],
-                        backgroundColor: 'transparent',
-                        tension: 0.4,
-                        fill: false,
-                        pointBackgroundColor: mediumColors[media.name],
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 3,
-                        pointHoverRadius: 6,
-                        borderWidth: 2
-                    });
-                }
-            });
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: spendLabels,
-                    datasets: mediumDatasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw}% reach`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Reach (%)' } },
-                        x: { title: { display: true, text: 'Spend' } }
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>
