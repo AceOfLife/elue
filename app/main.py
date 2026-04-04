@@ -1155,7 +1155,7 @@ async def read_form(request: Request):
         "other_cprp": 0
     }
     
-    return templates.TemplateResponse("index.html", {"request": request, **context})
+    return templates.TemplateResponse("index.html", context)
 
 @app.post("/predict/", response_class=HTMLResponse)
 async def predict(
@@ -1251,7 +1251,7 @@ async def predict(
                 "radio_cprp": 0,
                 "other_cprp": 0
             }
-            return templates.TemplateResponse("index.html", {"request": request, **context})
+            return templates.TemplateResponse("index.html", context)
         
         # Generate a unique filename to avoid conflicts
         logo_filename = f"{uuid.uuid4().hex}{file_extension}"
@@ -1444,7 +1444,7 @@ async def predict(
         "other_cprp": other_cprp
     }
     
-    return templates.TemplateResponse("index.html", {"request": request, **context})
+    return templates.TemplateResponse("index.html", context)
 
 @app.post("/predict_batch/", response_class=HTMLResponse)
 async def predict_batch(request: Request, file: UploadFile = File(...)):
@@ -1489,7 +1489,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "radio_cprp": 0,
                 "other_cprp": 0
             }
-            return templates.TemplateResponse("index.html", {"request": request, **context})
+            return templates.TemplateResponse("index.html", context)
 
         if "Spend" in df.columns:
             total_spend = df["Spend"].sum(skipna=True)
@@ -1532,7 +1532,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
                 "radio_cprp": 0,
                 "other_cprp": 0
             }
-            return templates.TemplateResponse("index.html", {"request": request, **context})
+            return templates.TemplateResponse("index.html", context)
 
         df["Medium"] = df["Station"].apply(detect_medium)
         campaign_duration_weeks = calculate_campaign_duration(
@@ -1690,7 +1690,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "other_cprp": other_cprp
         }
         
-        return templates.TemplateResponse("index.html", {"request": request, **context})
+        return templates.TemplateResponse("index.html", context)
 
     except Exception as e:
         context = {
@@ -1730,7 +1730,7 @@ async def predict_batch(request: Request, file: UploadFile = File(...)):
             "radio_cprp": 0,
             "other_cprp": 0
         }
-        return templates.TemplateResponse("index.html", {"request": request, **context})
+        return templates.TemplateResponse("index.html", context)
 
 
 import os
